@@ -54,7 +54,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         String catalogue = cat.getAddress();
         // TODO BSZ does not use prefix 'pica.'
         if (inSuchfeld.equals("12")) {
-            searchField = "ppn";
+            searchField = "pica.ppn";
         } else if (inSuchfeld.equals("8000")) {
             searchField = "pica.epn";
         } else if (inSuchfeld.equals("7")) {
@@ -65,7 +65,10 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
         String value = SRUHelper.search(catalogue, searchField, searchValue);
         Node node = SRUHelper.parseResult(this, catalogue, value);
-        Fileformat ff = SRUHelper.parsePicaFormat(this, node, inPrefs, searchValue);
+        if (node == null) {
+            return null;
+        }
+        Fileformat ff = SRUHelper.parseMarcFormat(this, node, inPrefs, searchValue);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
         return ff;
     }
