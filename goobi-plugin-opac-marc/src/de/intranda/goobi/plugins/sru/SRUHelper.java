@@ -14,6 +14,7 @@ import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.input.sax.XMLReaders;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
@@ -45,7 +46,6 @@ public class SRUHelper {
     public static String search(String catalogue, String searchField, String searchValue) {
         SRUClient client;
         try {
-            // TODO get version from configuration. GBV uses 1.2, SWB uses 1.1
             client = new SRUClient(catalogue, "marcxml", null, null);
             return client.getSearchResponse(searchField + "=" + searchValue);
         } catch (MalformedURLException e) {
@@ -53,12 +53,11 @@ public class SRUHelper {
         return "";
     }
 
-    @SuppressWarnings("deprecation")
     public static Node parseResult(GbvMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
             ParserConfigurationException {
         // removed validation against external dtd
-        SAXBuilder builder = new SAXBuilder(false);
-        builder.setValidation(false);
+        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
+
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
@@ -68,22 +67,16 @@ public class SRUHelper {
         // <srw:records>
         Element srw_records = root.getChild("records", SRW);
         // <srw:record>
-        Element srw_record = srw_records.getChild("record", SRW);
+        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
         // <srw:recordData>
-        if (srw_record != null) {
-            Element recordData = srw_record.getChild("recordData", SRW);
-            // TODO BSZ does not use any namespace
-            List<Element> recordList = recordData.getChildren("record", MARC);
-            Element record = null;
-            if (recordList == null || recordList.size() == 0) {
-                opac.setHitcount(0);
-                return null;
-            } else {
-                opac.setHitcount(recordList.size());
-                record = recordData.getChild("record", MARC);
-            }
+        if (srw_recordList == null || srw_recordList.isEmpty()) {
+            opac.setHitcount(0);
+            return null;
+        } else {
+            opac.setHitcount(srw_recordList.size());
+            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
 
-            record = recordData.getChild("record", MARC);
+            Element record = recordData.getChild("record", MARC);
 
             // generate an answer document
             DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -138,10 +131,10 @@ public class SRUHelper {
             collection.appendChild(marcRecord);
             return answer.getDocumentElement();
         }
-        return null;
+
     }
 
-    public static Fileformat parsePicaFormat(GbvMarcSruImport opac, Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
+    public static Fileformat parseMarcFormat(GbvMarcSruImport opac, Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
             TypeNotAllowedForParentException {
 
         MarcFileformat pp = new MarcFileformat(prefs);
