@@ -52,7 +52,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         coc = cat;
         String searchField = "";
         String catalogue = cat.getAddress();
-        // TODO BSZ does not use prefix 'pica.'
+
         if (inSuchfeld.equals("12")) {
             searchField = "pica.ppn";
         } else if (inSuchfeld.equals("8000")) {
