@@ -73,7 +73,7 @@ public class SRUClient {
     private String recordSchema = "urn:isbn:1-931666-33-4";
 
     /** Version parameter for the query **/
-    private String sruVersion = "1.2";
+    private String sruVersion = "1.1";
 
     /** Request a particular response packing **/
     private String responsePacking = "xml";

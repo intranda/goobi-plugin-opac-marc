@@ -54,6 +54,7 @@ import ugh.fileformats.mets.XStream;
 import com.googlecode.fascinator.redbox.sru.SRUClient;
 
 import de.intranda.goobi.plugins.GbvMarcSruImport;
+import de.intranda.goobi.plugins.SwbMarcSruImport;
 import de.intranda.ugh.extension.MarcFileformat;
 
 public class SRUHelper {
@@ -70,7 +71,7 @@ public class SRUHelper {
         return "";
     }
 
-    public static Node parseResult(GbvMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
+    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
             ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
@@ -151,7 +152,88 @@ public class SRUHelper {
 
     }
 
-    public static Fileformat parseMarcFormat(GbvMarcSruImport opac, Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
+    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
+            ParserConfigurationException {
+        // removed validation against external dtd
+        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
+
+        builder.setFeature("http://xml.org/sax/features/validation", false);
+        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        Document doc = builder.build(new StringReader(resultString), "utf-8");
+        // srw:searchRetrieveResponse
+        Element root = doc.getRootElement();
+        // <srw:records>
+        Element srw_records = root.getChild("records", SRW);
+        // <srw:record>
+        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
+        // <srw:recordData>
+        if (srw_recordList == null || srw_recordList.isEmpty()) {
+            opac.setHitcount(0);
+            return null;
+        } else {
+            opac.setHitcount(srw_recordList.size());
+            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
+
+            Element record = recordData.getChild("record");
+
+            // generate an answer document
+            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
+            org.w3c.dom.Document answer = docBuilder.newDocument();
+            org.w3c.dom.Element collection = answer.createElement("collection");
+            answer.appendChild(collection);
+
+            boolean isMultiVolume = false;
+            String anchorIdentifier = "";
+            List<Element> data = record.getChildren();
+
+            for (Element el : data) {
+                if (el.getName().equalsIgnoreCase("datafield")) {
+                    String tag = el.getAttributeValue("tag");
+                    List<Element> subfields = el.getChildren();
+                    for (Element sub : subfields) {
+                        String code = sub.getAttributeValue("code");
+                        // anchor identifier
+                        if (tag.equals("773") && code.equals("w")) {
+                            isMultiVolume = true;
+                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                        }
+                    }
+                }
+            }
+
+            org.w3c.dom.Element marcRecord = getRecord(answer, data);
+
+            if (isMultiVolume) {
+                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier);
+                Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
+
+                // srw:searchRetrieveResponse
+                Element anchorRoot = anchorDoc.getRootElement();
+                // <srw:records>
+                Element anchorSrw_records = anchorRoot.getChild("records", SRW);
+                // <srw:record>
+                Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
+                // <srw:recordData>
+                if (anchorSrw_record != null) {
+                    Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
+                    Element anchorRecord = anchorRecordData.getChild("record", MARC);
+
+                    List<Element> anchorData = anchorRecord.getChildren();
+                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData);
+
+                    collection.appendChild(anchorMarcRecord);
+                }
+
+            }
+            collection.appendChild(marcRecord);
+            return answer.getDocumentElement();
+        }
+
+    }
+
+    public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
             TypeNotAllowedForParentException {
 
         MarcFileformat pp = new MarcFileformat(prefs);
@@ -163,20 +245,22 @@ public class SRUHelper {
         DocStructType dst = prefs.getDocStrctTypeByName("BoundBook");
         DocStruct dsBoundBook = dd.createDocStruct(dst);
         dd.setPhysicalDocStruct(dsBoundBook);
-        
+
         return ff;
 
     }
 
     private static org.w3c.dom.Element getRecord(org.w3c.dom.Document answer, List<Element> data) {
         org.w3c.dom.Element marcRecord = answer.createElement("record");
-
+        // fix for wrong leader in SWB
+        org.w3c.dom.Element leader = null;
         for (Element datafield : data) {
-            if (datafield.getName().equals("leader")) {
-                org.w3c.dom.Element field = answer.createElement("leader");
-                marcRecord.appendChild(field);
+            if (datafield.getName().equals("leader") && leader == null) {
+                leader = answer.createElement("leader");
+                marcRecord.appendChild(leader);
+
                 Text text = answer.createTextNode(datafield.getText());
-                field.appendChild(text);
+                leader.appendChild(text);
 
                 // get the leader field as a datafield 
                 org.w3c.dom.Element leaderDataField = answer.createElement("datafield");

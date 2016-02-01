@@ -67,11 +67,11 @@ public class GbvMarcSruImport implements IOpacPlugin {
         }
 
         String value = SRUHelper.search(catalogue, searchField, searchValue);
-        Node node = SRUHelper.parseResult(this, catalogue, value);
+        Node node = SRUHelper.parseGbvResult(this, catalogue, value);
         if (node == null) {
             return null;
         }
-        Fileformat ff = SRUHelper.parseMarcFormat(this, node, inPrefs, searchValue);
+        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
         return ff;
     }
