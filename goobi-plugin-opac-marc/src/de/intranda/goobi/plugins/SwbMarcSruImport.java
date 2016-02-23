@@ -31,8 +31,12 @@ import org.goobi.production.enums.PluginType;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.w3c.dom.Node;
 
+import ugh.dl.DocStruct;
+import ugh.dl.DocStructType;
 import ugh.dl.Fileformat;
 import ugh.dl.Prefs;
+import ugh.exceptions.TypeNotAllowedAsChildException;
+import ugh.exceptions.TypeNotAllowedForParentException;
 import de.intranda.goobi.plugins.sru.SRUHelper;
 import de.sub.goobi.helper.UghHelper;
 import de.unigoettingen.sub.search.opac.ConfigOpac;
@@ -72,6 +76,19 @@ public class SwbMarcSruImport implements IOpacPlugin {
         }
         Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
+        
+        if (getOpacDocType().isPeriodical()) {
+            try {
+                DocStructType dstV = inPrefs.getDocStrctTypeByName("PeriodicalVolume");
+                DocStruct dsvolume = ff.getDigitalDocument().createDocStruct(dstV);
+                ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
+            } catch (TypeNotAllowedForParentException e) {
+                e.printStackTrace();
+            } catch (TypeNotAllowedAsChildException e) {
+                e.printStackTrace();
+            }
+        }
+        
         return ff;
     }
 
