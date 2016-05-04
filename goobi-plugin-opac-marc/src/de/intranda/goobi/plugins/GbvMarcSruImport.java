@@ -132,7 +132,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         return "GBV-MARC";
     }
 
-    @Override
+    
     public String getDescription() {
         return "GBV-MARC";
     }

@@ -132,7 +132,7 @@ public class SwbMarcSruImport implements IOpacPlugin {
         return "SWB-MARC";
     }
 
-    @Override
+    
     public String getDescription() {
         return "SWB-MARC";
     }
