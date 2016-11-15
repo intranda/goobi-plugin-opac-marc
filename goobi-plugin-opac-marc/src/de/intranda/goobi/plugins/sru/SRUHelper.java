@@ -59,19 +59,24 @@ import de.intranda.ugh.extension.MarcFileformat;
 
 public class SRUHelper {
     private static final Namespace SRW = Namespace.getNamespace("srw", "http://www.loc.gov/zing/srw/");
-    private static final Namespace MARC = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
+    private static Namespace MARC = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
 
-    public static String search(String catalogue, String searchField, String searchValue) {
+    
+    public static void setMarcNamespace(Namespace marc) {
+        MARC = marc;
+    }
+    
+    public static String search(String catalogue, String searchField, String searchValue, String packing, String version) {
         SRUClient client;
         try {
-            client = new SRUClient(catalogue, "marcxml", null, null);
+            client = new SRUClient(catalogue, "marcxml", packing, version);
             return client.getSearchResponse(searchField + "=" + searchValue);
         } catch (MalformedURLException e) {
         }
         return "";
     }
 
-    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
+    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString, String packing, String version) throws IOException, JDOMException,
             ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
@@ -125,7 +130,8 @@ public class SRUHelper {
             org.w3c.dom.Element marcRecord = getRecord(answer, data);
 
             if (isMultiVolume) {
-                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier);
+                // TODO
+                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
                 // srw:searchRetrieveResponse
@@ -152,7 +158,7 @@ public class SRUHelper {
 
     }
 
-    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString) throws IOException, JDOMException,
+    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version) throws IOException, JDOMException,
             ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
@@ -206,7 +212,7 @@ public class SRUHelper {
             org.w3c.dom.Element marcRecord = getRecord(answer, data);
 
             if (isMultiVolume) {
-                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier);
+                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
                 // srw:searchRetrieveResponse

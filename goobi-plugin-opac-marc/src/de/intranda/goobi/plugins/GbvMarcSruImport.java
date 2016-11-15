@@ -31,6 +31,7 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import org.apache.log4j.Logger;
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
+import org.jdom2.Namespace;
 import org.w3c.dom.Node;
 
 import ugh.dl.DocStruct;
@@ -54,6 +55,11 @@ public class GbvMarcSruImport implements IOpacPlugin {
     private String atstsl;
     private ConfigOpacCatalogue coc;
 
+    private String packing = null;
+    private String version = null;
+    private String identifierSearchFieldPrefix = "pica.ppn";
+    private Namespace marcNamespace = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");;
+
     @Override
     public Fileformat search(String inSuchfeld, String searchValue, ConfigOpacCatalogue cat, Prefs inPrefs) throws Exception {
         coc = cat;
@@ -61,7 +67,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         String catalogue = cat.getAddress();
 
         if (inSuchfeld.equals("12")) {
-            searchField = "pica.ppn";
+            searchField = identifierSearchFieldPrefix;
         } else if (inSuchfeld.equals("8000")) {
             searchField = "pica.epn";
         } else if (inSuchfeld.equals("7")) {
@@ -70,8 +76,9 @@ public class GbvMarcSruImport implements IOpacPlugin {
             searchField = "pica.iss";
         }
 
-        String value = SRUHelper.search(catalogue, searchField, searchValue);
-        Node node = SRUHelper.parseGbvResult(this, catalogue, value);
+        SRUHelper.setMarcNamespace(marcNamespace);
+        String value = SRUHelper.search(catalogue, searchField, searchValue, packing, version);
+        Node node = SRUHelper.parseGbvResult(this, catalogue, value, packing, version);
         if (node == null) {
             return null;
         }
@@ -132,7 +139,6 @@ public class GbvMarcSruImport implements IOpacPlugin {
         return "GBV-MARC";
     }
 
-    
     public String getDescription() {
         return "GBV-MARC";
     }
@@ -185,4 +191,35 @@ public class GbvMarcSruImport implements IOpacPlugin {
         return res.replaceAll("[\\W]", "");
     }
 
+    public String getPacking() {
+        return packing;
+    }
+
+    public void setPacking(String packing) {
+        this.packing = packing;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+    
+    public String getIdentifierSearchFieldPrefix() {
+        return identifierSearchFieldPrefix;
+    }
+    public void setIdentifierSearchFieldPrefix(String identifierSearchFieldPrefix) {
+        this.identifierSearchFieldPrefix = identifierSearchFieldPrefix;
+    }
+
+    public void setMarcNamespace(Namespace marcNamespace) {
+        this.marcNamespace = marcNamespace;
+    }
+    
+    public Namespace getMarcNamespace() {
+        return marcNamespace;
+    }
+    
 }

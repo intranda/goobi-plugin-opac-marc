@@ -69,8 +69,8 @@ public class SwbMarcSruImport implements IOpacPlugin {
             searchField = "pica.iss";
         }
 
-        String value = SRUHelper.search(catalogue, searchField, searchValue);
-        Node node = SRUHelper.parseSwbResult(this, catalogue, value);
+        String value = SRUHelper.search(catalogue, searchField, searchValue, null, null);
+        Node node = SRUHelper.parseSwbResult(this, catalogue, value, null, null);
         if (node == null) {
             return null;
         }
