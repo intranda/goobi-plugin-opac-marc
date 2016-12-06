@@ -7,7 +7,7 @@
 	<!-- ================================= 
 	        properties             
 	     ================================= -->
-	<property name="filename" value="MarcOpacPlugin" />
+	<property name="filename" value="plugin_intranda_opac_marc" />
 	<property name="dir.build" value="bin" />
 	<property name="dir.deploy" value="deploy" />
 	<property name="pluginFolderWin" value="C:/Goobi/plugins/opac/" />
