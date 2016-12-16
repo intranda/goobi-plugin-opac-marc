@@ -84,12 +84,18 @@ public class GbvMarcSruImport implements IOpacPlugin {
         }
         Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
-
-        if (getOpacDocType().isPeriodical()) {
+        ConfigOpacDoctype codt = getOpacDocType();
+        if (codt.isPeriodical()) {
             try {
-                DocStructType dstV = inPrefs.getDocStrctTypeByName("PeriodicalVolume");
-                DocStruct dsvolume = ff.getDigitalDocument().createDocStruct(dstV);
-                ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
+                if (codt.getRulesetChildType() != null && !codt.getRulesetChildType().isEmpty()) {
+                    DocStructType dstyvolume = inPrefs.getDocStrctTypeByName(codt.getRulesetChildType());
+                    DocStruct dsvolume = ff.getDigitalDocument().createDocStruct(dstyvolume);
+                    ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
+                } else {
+                    DocStructType dstV = inPrefs.getDocStrctTypeByName("PeriodicalVolume");
+                    DocStruct dsvolume = ff.getDigitalDocument().createDocStruct(dstV);
+                    ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
+                }
             } catch (TypeNotAllowedForParentException e) {
                 e.printStackTrace();
             } catch (TypeNotAllowedAsChildException e) {
@@ -206,10 +212,11 @@ public class GbvMarcSruImport implements IOpacPlugin {
     public void setVersion(String version) {
         this.version = version;
     }
-    
+
     public String getIdentifierSearchFieldPrefix() {
         return identifierSearchFieldPrefix;
     }
+
     public void setIdentifierSearchFieldPrefix(String identifierSearchFieldPrefix) {
         this.identifierSearchFieldPrefix = identifierSearchFieldPrefix;
     }
@@ -217,9 +224,9 @@ public class GbvMarcSruImport implements IOpacPlugin {
     public void setMarcNamespace(Namespace marcNamespace) {
         this.marcNamespace = marcNamespace;
     }
-    
+
     public Namespace getMarcNamespace() {
         return marcNamespace;
     }
-    
+
 }
