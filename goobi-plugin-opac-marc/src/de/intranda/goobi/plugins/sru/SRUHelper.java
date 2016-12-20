@@ -32,6 +32,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -61,11 +62,10 @@ public class SRUHelper {
     private static final Namespace SRW = Namespace.getNamespace("srw", "http://www.loc.gov/zing/srw/");
     private static Namespace MARC = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
 
-    
     public static void setMarcNamespace(Namespace marc) {
         MARC = marc;
     }
-    
+
     public static String search(String catalogue, String searchField, String searchValue, String packing, String version) {
         SRUClient client;
         try {
@@ -76,8 +76,8 @@ public class SRUHelper {
         return "";
     }
 
-    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString, String packing, String version) throws IOException, JDOMException,
-            ParserConfigurationException {
+    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString, String packing, String version)
+            throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
 
@@ -127,7 +127,7 @@ public class SRUHelper {
                 }
             }
 
-            org.w3c.dom.Element marcRecord = getRecord(answer, data);
+            org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
 
             if (isMultiVolume) {
                 // TODO
@@ -146,7 +146,7 @@ public class SRUHelper {
                     Element anchorRecord = anchorRecordData.getChild("record", MARC);
 
                     List<Element> anchorData = anchorRecord.getChildren();
-                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData);
+                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
 
                     collection.appendChild(anchorMarcRecord);
                 }
@@ -158,8 +158,8 @@ public class SRUHelper {
 
     }
 
-    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version) throws IOException, JDOMException,
-            ParserConfigurationException {
+    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version)
+            throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
 
@@ -209,7 +209,7 @@ public class SRUHelper {
                 }
             }
 
-            org.w3c.dom.Element marcRecord = getRecord(answer, data);
+            org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
 
             if (isMultiVolume) {
                 String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
@@ -227,7 +227,7 @@ public class SRUHelper {
                     Element anchorRecord = anchorRecordData.getChild("record", MARC);
 
                     List<Element> anchorData = anchorRecord.getChildren();
-                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData);
+                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
 
                     collection.appendChild(anchorMarcRecord);
                 }
@@ -256,10 +256,12 @@ public class SRUHelper {
 
     }
 
-    private static org.w3c.dom.Element getRecord(org.w3c.dom.Document answer, List<Element> data) {
+    private static org.w3c.dom.Element getRecord(org.w3c.dom.Document answer, List<Element> data, IOpacPlugin plugin) {
         org.w3c.dom.Element marcRecord = answer.createElement("record");
         // fix for wrong leader in SWB
         org.w3c.dom.Element leader = null;
+        String author = "";
+        String title = "";
         for (Element datafield : data) {
             if (datafield.getName().equals("leader") && leader == null) {
                 leader = answer.createElement("leader");
@@ -316,6 +318,7 @@ public class SRUHelper {
                 field.setAttribute("ind1", ind1);
                 field.setAttribute("ind2", ind2);
                 List<Element> subfields = datafield.getChildren();
+
                 for (Element sub : subfields) {
                     org.w3c.dom.Element subfield = answer.createElement("subfield");
                     field.appendChild(subfield);
@@ -323,6 +326,10 @@ public class SRUHelper {
                     subfield.setAttribute("code", code);
                     Text text = answer.createTextNode(sub.getText());
                     subfield.appendChild(text);
+
+                    if (tag.equals("100") && code.equals("a")) {
+                        author = sub.getText();
+                    }
 
                     // main title, create sorting title
                     if (tag.equals("245") && code.equals("a")) {
@@ -334,6 +341,7 @@ public class SRUHelper {
                             int numberOfNonfillingCharacter = new Integer(ind2).intValue();
                             subtext = subtext.substring(numberOfNonfillingCharacter);
                         }
+                        title = subtext;
                         Text sortingtext = answer.createTextNode(subtext);
                         sorting.appendChild(sortingtext);
 
@@ -341,6 +349,7 @@ public class SRUHelper {
                 }
             }
         }
+        plugin.setAtstsl(plugin.createAtstsl(title, author));
         return marcRecord;
     }
 }
