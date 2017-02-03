@@ -28,7 +28,6 @@ import java.util.StringTokenizer;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
-import org.apache.log4j.Logger;
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Namespace;
@@ -48,7 +47,6 @@ import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
 
 @PluginImplementation
 public class GbvMarcSruImport implements IOpacPlugin {
-    private static final Logger logger = Logger.getLogger(GbvMarcSruImport.class);
 
     private int hitcount;
     private String gattung = "Aa";
@@ -151,21 +149,23 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
     @Override
     public ConfigOpacDoctype getOpacDocType() {
+
+        ConfigOpac co;
+        ConfigOpacDoctype cod = null;
         try {
-            ConfigOpac co = new ConfigOpac();
-            ConfigOpacDoctype cod = co.getDoctypeByMapping(this.gattung, this.coc.getTitle());
+            co = new ConfigOpac();
+            //            co = ConfigOpac.getInstance();
+            cod = co.getDoctypeByMapping(this.gattung, this.coc.getTitle());
             if (cod == null) {
 
-                cod = new ConfigOpac().getAllDoctypes().get(0);
+                cod = co.getAllDoctypes().get(0);
                 this.gattung = cod.getMappings().get(0);
 
             }
-            return cod;
         } catch (IOException e) {
-            logger.error("OpacDoctype unknown", e);
-
-            return null;
         }
+        return cod;
+
     }
 
     public String createAtstsl(String title, String author) {
