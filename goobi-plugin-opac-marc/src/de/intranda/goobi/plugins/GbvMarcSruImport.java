@@ -152,18 +152,16 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
         ConfigOpac co;
         ConfigOpacDoctype cod = null;
-        try {
-            co = new ConfigOpac();
-            //            co = ConfigOpac.getInstance();
-            cod = co.getDoctypeByMapping(this.gattung, this.coc.getTitle());
-            if (cod == null) {
 
-                cod = co.getAllDoctypes().get(0);
-                this.gattung = cod.getMappings().get(0);
+        co = ConfigOpac.getInstance();
+        cod = co.getDoctypeByMapping(this.gattung, this.coc.getTitle());
+        if (cod == null) {
 
-            }
-        } catch (IOException e) {
+            cod = co.getAllDoctypes().get(0);
+            this.gattung = cod.getMappings().get(0);
+
         }
+
         return cod;
 
     }
