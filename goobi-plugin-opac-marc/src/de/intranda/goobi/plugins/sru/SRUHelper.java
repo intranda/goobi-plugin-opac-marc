@@ -42,6 +42,11 @@ import org.jdom2.input.sax.XMLReaders;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
+import com.googlecode.fascinator.redbox.sru.SRUClient;
+
+import de.intranda.goobi.plugins.GbvMarcSruImport;
+//import de.intranda.goobi.plugins.SwbMarcSruImport;
+import de.intranda.ugh.extension.MarcFileformat;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
@@ -52,12 +57,6 @@ import ugh.exceptions.ReadException;
 import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.fileformats.mets.XStream;
 
-import com.googlecode.fascinator.redbox.sru.SRUClient;
-
-import de.intranda.goobi.plugins.GbvMarcSruImport;
-//import de.intranda.goobi.plugins.SwbMarcSruImport;
-import de.intranda.ugh.extension.MarcFileformat;
-
 public class SRUHelper {
     private static final Namespace SRW = Namespace.getNamespace("srw", "http://www.loc.gov/zing/srw/");
     private static Namespace MARC = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
@@ -66,17 +65,17 @@ public class SRUHelper {
         MARC = marc;
     }
 
-    public static String search(String catalogue, String searchField, String searchValue, String packing, String version) {
+    public static String search(String catalogue, String schema, String searchField, String searchValue, String packing, String version) {
         SRUClient client;
         try {
-            client = new SRUClient(catalogue, "marcxml", packing, version);
+            client = new SRUClient(catalogue, schema, packing, version);
             return client.getSearchResponse(searchField + "=" + searchValue);
         } catch (MalformedURLException e) {
         }
         return "";
     }
 
-    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String resultString, String packing, String version)
+    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing, String version)
             throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
@@ -131,7 +130,7 @@ public class SRUHelper {
 
             if (isMultiVolume) {
                 // TODO
-                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
+                String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
                 // srw:searchRetrieveResponse
@@ -158,89 +157,89 @@ public class SRUHelper {
 
     }
 
-//    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version)
-//            throws IOException, JDOMException, ParserConfigurationException {
-//        // removed validation against external dtd
-//        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
-//
-//        builder.setFeature("http://xml.org/sax/features/validation", false);
-//        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-//        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-//        Document doc = builder.build(new StringReader(resultString), "utf-8");
-//        // srw:searchRetrieveResponse
-//        Element root = doc.getRootElement();
-//        // <srw:records>
-//        Element srw_records = root.getChild("records", SRW);
-//        // <srw:record>
-//        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
-//        // <srw:recordData>
-//        if (srw_recordList == null || srw_recordList.isEmpty()) {
-//            opac.setHitcount(0);
-//            return null;
-//        } else {
-//            opac.setHitcount(srw_recordList.size());
-//            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
-//
-//            Element record = recordData.getChild("record");
-//
-//            // generate an answer document
-//            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
-//            org.w3c.dom.Document answer = docBuilder.newDocument();
-//            org.w3c.dom.Element collection = answer.createElement("collection");
-//            answer.appendChild(collection);
-//
-//            boolean isMultiVolume = false;
-//            String anchorIdentifier = "";
-//            List<Element> data = record.getChildren();
-//
-//            for (Element el : data) {
-//                if (el.getName().equalsIgnoreCase("datafield")) {
-//                    String tag = el.getAttributeValue("tag");
-//                    List<Element> subfields = el.getChildren();
-//                    for (Element sub : subfields) {
-//                        String code = sub.getAttributeValue("code");
-//                        // anchor identifier
-//                        if (tag.equals("773") && code.equals("w")) {
-//                            isMultiVolume = true;
-//                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
-//                        }
-//                    }
-//                }
-//            }
-//
-//            org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
-//
-//            if (isMultiVolume) {
-//                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
-//                Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
-//
-//                // srw:searchRetrieveResponse
-//                Element anchorRoot = anchorDoc.getRootElement();
-//                // <srw:records>
-//                Element anchorSrw_records = anchorRoot.getChild("records", SRW);
-//                // <srw:record>
-//                Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
-//                // <srw:recordData>
-//                if (anchorSrw_record != null) {
-//                    Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
-//                    Element anchorRecord = anchorRecordData.getChild("record", MARC);
-//
-//                    List<Element> anchorData = anchorRecord.getChildren();
-//                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
-//
-//                    collection.appendChild(anchorMarcRecord);
-//                }
-//
-//            }
-//            collection.appendChild(marcRecord);
-//            return answer.getDocumentElement();
-//        }
-//
-//    }
+    //    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version)
+    //            throws IOException, JDOMException, ParserConfigurationException {
+    //        // removed validation against external dtd
+    //        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
+    //
+    //        builder.setFeature("http://xml.org/sax/features/validation", false);
+    //        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+    //        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    //        Document doc = builder.build(new StringReader(resultString), "utf-8");
+    //        // srw:searchRetrieveResponse
+    //        Element root = doc.getRootElement();
+    //        // <srw:records>
+    //        Element srw_records = root.getChild("records", SRW);
+    //        // <srw:record>
+    //        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
+    //        // <srw:recordData>
+    //        if (srw_recordList == null || srw_recordList.isEmpty()) {
+    //            opac.setHitcount(0);
+    //            return null;
+    //        } else {
+    //            opac.setHitcount(srw_recordList.size());
+    //            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
+    //
+    //            Element record = recordData.getChild("record");
+    //
+    //            // generate an answer document
+    //            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+    //            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
+    //            org.w3c.dom.Document answer = docBuilder.newDocument();
+    //            org.w3c.dom.Element collection = answer.createElement("collection");
+    //            answer.appendChild(collection);
+    //
+    //            boolean isMultiVolume = false;
+    //            String anchorIdentifier = "";
+    //            List<Element> data = record.getChildren();
+    //
+    //            for (Element el : data) {
+    //                if (el.getName().equalsIgnoreCase("datafield")) {
+    //                    String tag = el.getAttributeValue("tag");
+    //                    List<Element> subfields = el.getChildren();
+    //                    for (Element sub : subfields) {
+    //                        String code = sub.getAttributeValue("code");
+    //                        // anchor identifier
+    //                        if (tag.equals("773") && code.equals("w")) {
+    //                            isMultiVolume = true;
+    //                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //
+    //            org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
+    //
+    //            if (isMultiVolume) {
+    //                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
+    //                Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
+    //
+    //                // srw:searchRetrieveResponse
+    //                Element anchorRoot = anchorDoc.getRootElement();
+    //                // <srw:records>
+    //                Element anchorSrw_records = anchorRoot.getChild("records", SRW);
+    //                // <srw:record>
+    //                Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
+    //                // <srw:recordData>
+    //                if (anchorSrw_record != null) {
+    //                    Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
+    //                    Element anchorRecord = anchorRecordData.getChild("record", MARC);
+    //
+    //                    List<Element> anchorData = anchorRecord.getChildren();
+    //                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
+    //
+    //                    collection.appendChild(anchorMarcRecord);
+    //                }
+    //
+    //            }
+    //            collection.appendChild(marcRecord);
+    //            return answer.getDocumentElement();
+    //        }
+    //
+    //    }
 
     public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
-            TypeNotAllowedForParentException {
+    TypeNotAllowedForParentException {
 
         MarcFileformat pp = new MarcFileformat(prefs);
         pp.read(marc);
@@ -270,7 +269,7 @@ public class SRUHelper {
                 Text text = answer.createTextNode(datafield.getText());
                 leader.appendChild(text);
 
-                // get the leader field as a datafield 
+                // get the leader field as a datafield
                 org.w3c.dom.Element leaderDataField = answer.createElement("datafield");
                 leaderDataField.setAttribute("tag", "leader");
                 leaderDataField.setAttribute("ind1", " ");
@@ -293,7 +292,7 @@ public class SRUHelper {
                 field.setAttribute("tag", tag);
                 marcRecord.appendChild(field);
 
-                // get the controlfields as datafields 
+                // get the controlfields as datafields
                 org.w3c.dom.Element leaderDataField = answer.createElement("datafield");
                 leaderDataField.setAttribute("tag", tag);
                 leaderDataField.setAttribute("ind1", " ");

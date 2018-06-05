@@ -23,27 +23,25 @@
 
 package de.intranda.goobi.plugins;
 
-import java.io.IOException;
 import java.util.StringTokenizer;
-
-import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Namespace;
 import org.w3c.dom.Node;
 
+import de.intranda.goobi.plugins.sru.SRUHelper;
+import de.sub.goobi.helper.UghHelper;
+import de.unigoettingen.sub.search.opac.ConfigOpac;
+import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
+import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
+import net.xeoh.plugins.base.annotations.PluginImplementation;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
 import ugh.dl.Fileformat;
 import ugh.dl.Prefs;
 import ugh.exceptions.TypeNotAllowedAsChildException;
 import ugh.exceptions.TypeNotAllowedForParentException;
-import de.intranda.goobi.plugins.sru.SRUHelper;
-import de.sub.goobi.helper.UghHelper;
-import de.unigoettingen.sub.search.opac.ConfigOpac;
-import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
-import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
 
 @PluginImplementation
 public class GbvMarcSruImport implements IOpacPlugin {
@@ -52,6 +50,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
     private String gattung = "Aa";
     private String atstsl;
     private ConfigOpacCatalogue coc;
+    private String sruSchema = "";
 
     private String packing = null;
     private String version = null;
@@ -75,8 +74,8 @@ public class GbvMarcSruImport implements IOpacPlugin {
         }
 
         SRUHelper.setMarcNamespace(marcNamespace);
-        String value = SRUHelper.search(catalogue, searchField, searchValue, packing, version);
-        Node node = SRUHelper.parseGbvResult(this, catalogue, value, packing, version);
+        String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
+        Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version);
         if (node == null) {
             return null;
         }
@@ -120,6 +119,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         this.gattung = gattung;
     }
 
+    @Override
     public String getGattung() {
         return gattung;
     }
@@ -129,6 +129,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         return this.atstsl;
     }
 
+    @Override
     public void setAtstsl(String atstsl) {
         this.atstsl = atstsl;
     }
@@ -166,6 +167,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
     }
 
+    @Override
     public String createAtstsl(String title, String author) {
         StringBuilder result = new StringBuilder(8);
         if (author != null && author.trim().length() > 0) {
@@ -225,6 +227,10 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
     public Namespace getMarcNamespace() {
         return marcNamespace;
+    }
+
+    public void setSruSchema(String sruSchema) {
+        this.sruSchema = sruSchema;
     }
 
 }
