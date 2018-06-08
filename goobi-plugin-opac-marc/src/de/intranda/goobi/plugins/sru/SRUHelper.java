@@ -47,6 +47,7 @@ import com.googlecode.fascinator.redbox.sru.SRUClient;
 import de.intranda.goobi.plugins.GbvMarcSruImport;
 //import de.intranda.goobi.plugins.SwbMarcSruImport;
 import de.intranda.ugh.extension.MarcFileformat;
+import de.sub.goobi.helper.Helper;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
@@ -75,30 +76,19 @@ public class SRUHelper {
         return "";
     }
 
-
-
-    public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing, String version)
-            throws IOException, JDOMException, ParserConfigurationException {
+    public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString,
+            String packing, String version) throws IOException, JDOMException, ParserConfigurationException {
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
-        // srw:searchRetrieveResponse
-        Element root = doc.getRootElement();
-        // <srw:records>
-        Element srw_records = root.getChild("records", SRW);
-        // <srw:record>
-        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
-        // <srw:recordData>
-        if (srw_recordList == null || srw_recordList.isEmpty()) {
+        Element record = getRecordWithoutSruHeader(doc);
+        if (record == null) {
             opac.setHitcount(0);
             return null;
         }
-        opac.setHitcount(srw_recordList.size());
-        Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
-
-        Element record = recordData.getChild("record", MARC);
+        opac.setHitcount(1);
 
         // generate an answer document
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -112,7 +102,10 @@ public class SRUHelper {
         List<Element> data = record.getChildren();
 
         // TODO check leader if its mono, multi, cart,
-
+        String otherPpn = null;
+        String currentEpn = null;
+        String otherEpn = null;
+        boolean foundMultipleEpns = false;
         for (Element el : data) {
             if (el.getName().equalsIgnoreCase("datafield")) {
                 String tag = el.getAttributeValue("tag");
@@ -132,17 +125,61 @@ public class SRUHelper {
                     } else if (tag.equals("830") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                    } else if (tag.equals("776") && code.equals("w")) {
+                        otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                    } else if (tag.equals("954") && code.equals("b")) {
+                        if (currentEpn == null) {
+                            currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        } else {
+                            foundMultipleEpns = true;
+                        }
                     }
-
-
                 }
             }
+        }
+        // TODO overwrite header for multipart monographs
+
+        // get digital epn from digital ppn record
+        if (otherPpn != null) {
+            String otherResult = SRUHelper.search(catalogue, schema, "pica.ppn", otherPpn, packing, version);
+            Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
+            if (otherDocument != null) {
+                Element otherRecord = getRecordWithoutSruHeader(otherDocument);
+                List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
+                for (Element field : fieldList) {
+                    if (field.getAttributeValue("tag").equals("954")) {
+                        List<Element> subfields = field.getChildren();
+                        for (Element sub : subfields) {
+                            String code = sub.getAttributeValue("code");
+                            if (code.equals("b")) {
+                                if (otherEpn == null) {
+                                    otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                } else {
+                                    foundMultipleEpns = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (otherEpn != null) {
+            Element datafield = new Element("datafield", MARC);
+            datafield.setAttribute("tag", "epnDigital");
+            datafield.setAttribute("ind1", "");
+            datafield.setAttribute("ind2", "");
+
+            Element subfield = new Element("subfield", MARC);
+            subfield.setAttribute("code", "a");
+            subfield.setText(otherEpn);
+            datafield.addContent(subfield);
+            data.add(datafield);
         }
 
         org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
 
         if (isMultiVolume) {
-            // TODO
+            // TODO other record
             String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
             Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
@@ -164,12 +201,17 @@ public class SRUHelper {
             }
 
         }
+
+        if (foundMultipleEpns) {
+            Helper.setFehlerMeldung("import_foundMultipleEPNs");
+        }
+
         collection.appendChild(marcRecord);
         return answer.getDocumentElement();
     }
 
-    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing, String version)
-            throws IOException, JDOMException, ParserConfigurationException {
+    public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing,
+            String version) throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
 
@@ -178,21 +220,12 @@ public class SRUHelper {
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         // srw:searchRetrieveResponse
-        Element root = doc.getRootElement();
-        // <srw:records>
-        Element srw_records = root.getChild("records", SRW);
-        // <srw:record>
-        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
-        // <srw:recordData>
-        if (srw_recordList == null || srw_recordList.isEmpty()) {
+        Element record = getRecordWithoutSruHeader(doc);
+        if (record == null) {
             opac.setHitcount(0);
             return null;
         } else {
-            opac.setHitcount(srw_recordList.size());
-            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
-
-            Element record = recordData.getChild("record", MARC);
-
+            opac.setHitcount(1);
             // generate an answer document
             DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
@@ -226,17 +259,8 @@ public class SRUHelper {
                 String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
-                // srw:searchRetrieveResponse
-                Element anchorRoot = anchorDoc.getRootElement();
-                // <srw:records>
-                Element anchorSrw_records = anchorRoot.getChild("records", SRW);
-                // <srw:record>
-                Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
-                // <srw:recordData>
-                if (anchorSrw_record != null) {
-                    Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
-                    Element anchorRecord = anchorRecordData.getChild("record", MARC);
-
+                Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
+                if (anchorRecord != null) {
                     List<Element> anchorData = anchorRecord.getChildren();
                     org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
 
@@ -250,86 +274,21 @@ public class SRUHelper {
 
     }
 
-    //    public static Node parseSwbResult(SwbMarcSruImport opac, String catalogue, String resultString, String packing, String version)
-    //            throws IOException, JDOMException, ParserConfigurationException {
-    //        // removed validation against external dtd
-    //        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
-    //
-    //        builder.setFeature("http://xml.org/sax/features/validation", false);
-    //        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-    //        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-    //        Document doc = builder.build(new StringReader(resultString), "utf-8");
-    //        // srw:searchRetrieveResponse
-    //        Element root = doc.getRootElement();
-    //        // <srw:records>
-    //        Element srw_records = root.getChild("records", SRW);
-    //        // <srw:record>
-    //        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
-    //        // <srw:recordData>
-    //        if (srw_recordList == null || srw_recordList.isEmpty()) {
-    //            opac.setHitcount(0);
-    //            return null;
-    //        } else {
-    //            opac.setHitcount(srw_recordList.size());
-    //            Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
-    //
-    //            Element record = recordData.getChild("record");
-    //
-    //            // generate an answer document
-    //            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
-    //            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
-    //            org.w3c.dom.Document answer = docBuilder.newDocument();
-    //            org.w3c.dom.Element collection = answer.createElement("collection");
-    //            answer.appendChild(collection);
-    //
-    //            boolean isMultiVolume = false;
-    //            String anchorIdentifier = "";
-    //            List<Element> data = record.getChildren();
-    //
-    //            for (Element el : data) {
-    //                if (el.getName().equalsIgnoreCase("datafield")) {
-    //                    String tag = el.getAttributeValue("tag");
-    //                    List<Element> subfields = el.getChildren();
-    //                    for (Element sub : subfields) {
-    //                        String code = sub.getAttributeValue("code");
-    //                        // anchor identifier
-    //                        if (tag.equals("773") && code.equals("w")) {
-    //                            isMultiVolume = true;
-    //                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //
-    //            org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
-    //
-    //            if (isMultiVolume) {
-    //                String anchorResult = SRUHelper.search(catalogue, "pica.ppn", anchorIdentifier, packing, version);
-    //                Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
-    //
-    //                // srw:searchRetrieveResponse
-    //                Element anchorRoot = anchorDoc.getRootElement();
-    //                // <srw:records>
-    //                Element anchorSrw_records = anchorRoot.getChild("records", SRW);
-    //                // <srw:record>
-    //                Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
-    //                // <srw:recordData>
-    //                if (anchorSrw_record != null) {
-    //                    Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
-    //                    Element anchorRecord = anchorRecordData.getChild("record", MARC);
-    //
-    //                    List<Element> anchorData = anchorRecord.getChildren();
-    //                    org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
-    //
-    //                    collection.appendChild(anchorMarcRecord);
-    //                }
-    //
-    //            }
-    //            collection.appendChild(marcRecord);
-    //            return answer.getDocumentElement();
-    //        }
-    //
-    //    }
+    public static Element getRecordWithoutSruHeader(Document document) {
+        Element root = document.getRootElement();
+        // <srw:records>
+        Element srw_records = root.getChild("records", SRW);
+        // <srw:record>
+        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
+        // <srw:recordData>
+        if (srw_recordList == null || srw_recordList.isEmpty()) {
+            return null;
+        }
+        Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
+
+        Element record = recordData.getChild("record", MARC);
+        return record;
+    }
 
     public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
     TypeNotAllowedForParentException {

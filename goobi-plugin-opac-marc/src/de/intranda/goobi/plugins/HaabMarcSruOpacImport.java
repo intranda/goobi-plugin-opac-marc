@@ -4,6 +4,7 @@ import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.w3c.dom.Node;
 
 import de.intranda.goobi.plugins.sru.SRUHelper;
+import de.sub.goobi.helper.UghHelper;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
 import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
 import lombok.Getter;
@@ -20,10 +21,10 @@ import ugh.exceptions.TypeNotAllowedForParentException;
 public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlugin {
 
     //  1.) Suche nach EPN
-    // TODO 2.) Suche nach zweiten Datensatz durch PPN Suche aus 776$w
-    // TODO 3.) Suche nach zweiter EPN aus 954$b
-    // TODO 4.) Warnung, falls 954$b mehrfach vorkommt
-    // TODO 5.) ATS generieren
+    //  2.) Suche nach zweiten Datensatz durch PPN Suche aus 776$w
+    //  3.) Suche nach zweiter EPN aus 954$b
+    //  4.) Warnung, falls 954$b mehrfach vorkommt
+    //  5.) ATS generieren
     // TODO 6.) Mehrbändige Werke
 
 
@@ -57,7 +58,6 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
 
         SRUHelper.setMarcNamespace(getMarcNamespace());
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
-        System.out.println(value);
         Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, value, packing, version);
         if (node == null) {
             return null;
@@ -86,4 +86,25 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
         return ff;
     }
 
+
+    @Override
+    public String createAtstsl(String myTitle, String autor) {
+        String titleValue = "";
+        if (myTitle != null && !myTitle.isEmpty()) {
+            if (myTitle.contains(" ")) {
+                titleValue = myTitle.substring(0, myTitle.indexOf(" "));
+            } else {
+                titleValue = myTitle;
+            }
+        }
+        titleValue = titleValue.toLowerCase();
+        if (titleValue.length() > 6) {
+            atstsl = titleValue.substring(0, 6);
+        } else {
+            atstsl = titleValue;
+        }
+        atstsl = UghHelper.convertUmlaut(atstsl);
+        atstsl = atstsl.replaceAll("[\\W]", "");
+        return atstsl;
+    }
 }

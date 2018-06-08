@@ -48,7 +48,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
     private int hitcount;
     protected String gattung = "Aa";
-    private String atstsl;
+    protected String atstsl;
     protected ConfigOpacCatalogue coc;
     protected String sruSchema = "";
 
