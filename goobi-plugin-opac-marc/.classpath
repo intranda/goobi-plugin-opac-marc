@@ -15,5 +15,6 @@
 	<classpathentry kind="lib" path="/Goobi/webapp/WEB-INF/lib/slf4j-api-1.7.21.jar"/>
 	<classpathentry kind="lib" path="/Goobi/webapp/WEB-INF/lib/httpcore-4.4.4.jar"/>
 	<classpathentry kind="lib" path="/Goobi/webapp/WEB-INF/lib/httpclient-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Goobi/webapp/WEB-INF/lib/lombok.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

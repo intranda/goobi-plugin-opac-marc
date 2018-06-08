@@ -47,13 +47,13 @@ import ugh.exceptions.TypeNotAllowedForParentException;
 public class GbvMarcSruImport implements IOpacPlugin {
 
     private int hitcount;
-    private String gattung = "Aa";
+    protected String gattung = "Aa";
     private String atstsl;
-    private ConfigOpacCatalogue coc;
-    private String sruSchema = "";
+    protected ConfigOpacCatalogue coc;
+    protected String sruSchema = "";
 
-    private String packing = null;
-    private String version = null;
+    protected String packing = null;
+    protected String version = null;
     private String identifierSearchFieldPrefix = "pica.ppn";
     private Namespace marcNamespace = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");;
 
