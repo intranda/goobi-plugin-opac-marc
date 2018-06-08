@@ -57,8 +57,8 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
 
         SRUHelper.setMarcNamespace(getMarcNamespace());
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
-        //        System.out.println(value);
-        Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version);
+        System.out.println(value);
+        Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, value, packing, version);
         if (node == null) {
             return null;
         }

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zs:searchRetrieveResponse xmlns:zs="http://www.loc.gov/zing/srw/"><zs:version>1.2</zs:version><zs:numberOfRecords>1</zs:numberOfRecords><zs:records><zs:record><zs:recordSchema>marcxml</zs:recordSchema><zs:recordPacking>xml</zs:recordPacking><zs:recordData><record xmlns="http://www.loc.gov/MARC21/slim">
+  <leader>xxxxxnam a22yyyyy c 4500</leader>
+  <controlfield tag="001">859235327</controlfield>
+  <controlfield tag="003">DE-601</controlfield>
+  <controlfield tag="005">20161004190101.0</controlfield>
+  <controlfield tag="008">160512s2016    gw            000 0 ger d</controlfield>
+  <datafield tag="020" ind1=" " ind2=" ">
+    <subfield code="a">9783937208480</subfield>
+    <subfield code="9">978-3-937208-48-0</subfield>
+  </datafield>
+  <datafield tag="024" ind1="8" ind2=" ">
+    <subfield code="a">BSZT469408758</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-576)469408758</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-599)BSZ469408758</subfield>
+  </datafield>
+  <datafield tag="040" ind1=" " ind2=" ">
+    <subfield code="b">ger</subfield>
+    <subfield code="c">GBVCP</subfield>
+    <subfield code="e">rda</subfield>
+  </datafield>
+  <datafield tag="041" ind1="0" ind2=" ">
+    <subfield code="a">ger</subfield>
+    <subfield code="a">eng</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2="0">
+    <subfield code="a">741.092</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2="0">
+    <subfield code="a">740</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2="9">
+    <subfield code="a">740</subfield>
+    <subfield code="a">750</subfield>
+    <subfield code="a">700</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">20.31</subfield>
+    <subfield code="9">Bildende Künstler</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">21.02</subfield>
+    <subfield code="9">Geschichte der Malerei</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="100" ind1="1" ind2=" ">
+    <subfield code="a">Cahn, Miriam</subfield>
+    <subfield code="e">KünstlerIn</subfield>
+    <subfield code="4">art</subfield>
+    <subfield code="0">(DE-601)080174175</subfield>
+    <subfield code="0">(DE-588)119363828</subfield>
+  </datafield>
+  <datafield tag="245" ind1="1" ind2="0">
+    <subfield code="a">Miriam Cahn</subfield>
+    <subfield code="b">auf Augenhöhe = At eye level</subfield>
+    <subfield code="c">Herausgeber: Anette Hüsch ; Texte Miriam Cahn, Anette Hüsch</subfield>
+  </datafield>
+  <datafield tag="246" ind1="1" ind2="3">
+    <subfield code="i">Impressum</subfield>
+    <subfield code="a">"Diese Publikation erscheint anlässlich der Ausstellung 'Miriam Cahn - Auf Augenhöhe'. Eine Ausstellung der Kunsthalle zu Kiel 12. März bis 24. Juli 2016</subfield>
+  </datafield>
+  <datafield tag="264" ind1="3" ind2="1">
+    <subfield code="a">Kiel</subfield>
+    <subfield code="b">Kunsthalle zu Kiel</subfield>
+    <subfield code="c">[2016]</subfield>
+  </datafield>
+  <datafield tag="300" ind1=" " ind2=" ">
+    <subfield code="a">111 Seiten</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">unbewegtes Bild</subfield>
+    <subfield code="b">sti</subfield>
+    <subfield code="2">rdacontent</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Text</subfield>
+    <subfield code="b">txt</subfield>
+    <subfield code="2">rdacontent</subfield>
+  </datafield>
+  <datafield tag="337" ind1=" " ind2=" ">
+    <subfield code="a">ohne Hilfsmittel zu benutzen</subfield>
+    <subfield code="b">n</subfield>
+    <subfield code="2">rdamedia</subfield>
+  </datafield>
+  <datafield tag="338" ind1=" " ind2=" ">
+    <subfield code="a">Band</subfield>
+    <subfield code="b">nc</subfield>
+    <subfield code="2">rdacarrier</subfield>
+  </datafield>
+  <datafield tag="546" ind1=" " ind2=" ">
+    <subfield code="a">Text deutsch und englisch</subfield>
+  </datafield>
+  <datafield tag="600" ind1="1" ind2="7">
+    <subfield code="0">(DE-601)080174175</subfield>
+    <subfield code="0">(DE-588)119363828</subfield>
+    <subfield code="a">Cahn, Miriam</subfield>
+    <subfield code="d">1949-</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="7">
+    <subfield code="0">(DE-601)10623871X</subfield>
+    <subfield code="0">(DE-588)4037220-0</subfield>
+    <subfield code="a">Malerei</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="655" ind1="0" ind2="7">
+    <subfield code="0">(DE-588)4135467-9</subfield>
+    <subfield code="a">Ausstellungskatalog</subfield>
+    <subfield code="x">Kunsthalle zu Kiel</subfield>
+    <subfield code="y">2016</subfield>
+    <subfield code="z">Kiel</subfield>
+    <subfield code="2">gnd-content</subfield>
+  </datafield>
+  <datafield tag="655" ind1="0" ind2="7">
+    <subfield code="0">(DE-588)4145395-5</subfield>
+    <subfield code="a">Bildband</subfield>
+    <subfield code="2">gnd-content</subfield>
+  </datafield>
+  <datafield tag="700" ind1="1" ind2=" ">
+    <subfield code="a">Hüsch, Anette</subfield>
+    <subfield code="e">HerausgeberIn</subfield>
+    <subfield code="4">edt</subfield>
+    <subfield code="0">(DE-601)589450778</subfield>
+    <subfield code="0">(DE-588)130420093</subfield>
+  </datafield>
+  <datafield tag="710" ind1="2" ind2=" ">
+    <subfield code="a">Kunsthalle zu Kiel</subfield>
+    <subfield code="e">VeranstalterIn</subfield>
+    <subfield code="4">orm</subfield>
+    <subfield code="e">Verlag</subfield>
+    <subfield code="4">pbl</subfield>
+    <subfield code="0">(DE-601)100251889</subfield>
+    <subfield code="0">(DE-588)8513-3</subfield>
+  </datafield>
+  <datafield tag="711" ind1="2" ind2=" ">
+    <subfield code="a">Ausstellung Miriam Cahn - Auf Augenhöhe</subfield>
+    <subfield code="d">2016.03.12-07.24</subfield>
+    <subfield code="c">Kiel</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="2">
+    <subfield code="u">http://d-nb.info/1101596333/04</subfield>
+    <subfield code="m">V:DE-101</subfield>
+    <subfield code="q">pdf/application</subfield>
+    <subfield code="3">Inhaltsverzeichnis</subfield>
+  </datafield>
+  <datafield tag="900" ind1=" " ind2=" ">
+    <subfield code="a">GBV</subfield>
+    <subfield code="b">HAAB Weimar &lt;32&gt;</subfield>
+    <subfield code="d">!MAG! 266910 - B</subfield>
+    <subfield code="x">L</subfield>
+    <subfield code="z">LC</subfield>
+  </datafield>
+  <datafield tag="954" ind1=" " ind2=" ">
+    <subfield code="0">HAAB Weimar &lt;32&gt;</subfield>
+    <subfield code="a">61</subfield>
+    <subfield code="b">1623368855</subfield>
+    <subfield code="c">01</subfield>
+    <subfield code="f">MAG</subfield>
+    <subfield code="d">266910 - B</subfield>
+    <subfield code="e">u</subfield>
+    <subfield code="x">0032</subfield>
+  </datafield>
+</record></zs:recordData><zs:recordPosition>1</zs:recordPosition></zs:record></zs:records><zs:echoedSearchRetrieveRequest><zs:version>1.2</zs:version><zs:query>pica.epn=1623368855</zs:query><zs:maximumRecords>2</zs:maximumRecords><zs:recordPacking>xml</zs:recordPacking><zs:recordSchema>marcxml</zs:recordSchema></zs:echoedSearchRetrieveRequest></zs:searchRetrieveResponse>
