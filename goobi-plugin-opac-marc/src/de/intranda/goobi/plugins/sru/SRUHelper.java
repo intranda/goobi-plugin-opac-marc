@@ -183,18 +183,65 @@ public class SRUHelper {
             String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
             Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
-            // srw:searchRetrieveResponse
-            Element anchorRoot = anchorDoc.getRootElement();
-            // <srw:records>
-            Element anchorSrw_records = anchorRoot.getChild("records", SRW);
-            // <srw:record>
-            Element anchorSrw_record = anchorSrw_records.getChild("record", SRW);
-            // <srw:recordData>
-            if (anchorSrw_record != null) {
-                Element anchorRecordData = anchorSrw_record.getChild("recordData", SRW);
-                Element anchorRecord = anchorRecordData.getChild("record", MARC);
+            Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
+
+            if (anchorRecord != null) {
 
                 List<Element> anchorData = anchorRecord.getChildren();
+                String otherAnchorPPN = null;
+                for (Element el : anchorData) {
+                    if (el.getName().equalsIgnoreCase("datafield")) {
+                        String tag = el.getAttributeValue("tag");
+                        if (tag.equals("776")) {
+                            List<Element> subfields = el.getChildren();
+                            for (Element sub : subfields) {
+                                String code = sub.getAttributeValue("code");
+                                // anchor identifier
+                                if (code.equals("w")) {
+                                    otherAnchorPPN = sub.getText().replaceAll("\\(.+\\)", "");
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                if (otherAnchorPPN != null) {
+                    String otherResult = SRUHelper.search(catalogue, schema, "pica.ppn", otherAnchorPPN, packing, version);
+                    Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
+                    if (otherDocument != null) {
+                        Element otherRecord = getRecordWithoutSruHeader(otherDocument);
+                        List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
+                        for (Element field : fieldList) {
+                            if (field.getAttributeValue("tag").equals("954")) {
+                                List<Element> subfields = field.getChildren();
+                                for (Element sub : subfields) {
+                                    String code = sub.getAttributeValue("code");
+                                    if (code.equals("b")) {
+                                        if (otherEpn == null) {
+                                            otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                        } else {
+                                            foundMultipleEpns = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (otherEpn != null) {
+                    Element datafield = new Element("datafield", MARC);
+                    datafield.setAttribute("tag", "epnDigital");
+                    datafield.setAttribute("ind1", "");
+                    datafield.setAttribute("ind2", "");
+
+                    Element subfield = new Element("subfield", MARC);
+                    subfield.setAttribute("code", "a");
+                    subfield.setText(otherEpn);
+                    datafield.addContent(subfield);
+                    anchorData.add(datafield);
+                }
+
                 org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
 
                 collection.appendChild(anchorMarcRecord);
