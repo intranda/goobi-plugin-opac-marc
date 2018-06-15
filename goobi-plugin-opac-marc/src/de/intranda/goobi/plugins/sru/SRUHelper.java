@@ -89,6 +89,16 @@ public class SRUHelper {
             return null;
         }
         opac.setHitcount(1);
+        boolean isPeriodical = false;
+        boolean isMultiVolume = false;
+        String anchorPpn = null;
+        String otherAnchorPpn = null;
+        String otherAnchorEpn = null;
+
+        String otherPpn = null;
+        String currentEpn = null;
+        String otherEpn = null;
+        boolean foundMultipleEpns = false;
 
         // generate an answer document
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -97,16 +107,16 @@ public class SRUHelper {
         org.w3c.dom.Element collection = answer.createElement("collection");
         answer.appendChild(collection);
 
-        boolean isMultiVolume = false;
-        String anchorIdentifier = "";
         List<Element> data = record.getChildren();
-
-        // TODO check leader if its mono, multi, cart,
-        String otherPpn = null;
-        String currentEpn = null;
-        String otherEpn = null;
-        boolean foundMultipleEpns = false;
         for (Element el : data) {
+            if (el.getName().equalsIgnoreCase("leader")) {
+                String value = el.getText();
+                char c5 = value.toCharArray()[6];
+                char c6 = value.toCharArray()[7];
+                if (c5 == 'a' && (c6 == 's' || c6 == 'd')) {
+                    isPeriodical = true;
+                }
+            }
             if (el.getName().equalsIgnoreCase("datafield")) {
                 String tag = el.getAttributeValue("tag");
                 List<Element> subfields = el.getChildren();
@@ -115,16 +125,16 @@ public class SRUHelper {
                     // anchor identifier
                     if (tag.equals("773") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("800") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("830") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("776") && code.equals("w")) {
                         otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("954") && code.equals("b")) {
@@ -137,97 +147,62 @@ public class SRUHelper {
                 }
             }
         }
-        // TODO overwrite header for multipart monographs
 
+        // TODO search for pica.zdb for periodca
         // get digital epn from digital ppn record
         if (otherPpn != null) {
-            String otherResult = SRUHelper.search(catalogue, schema, "pica.ppn", otherPpn, packing, version);
+            String otherResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherPpn, packing, version);
             Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
             if (otherDocument != null) {
                 Element otherRecord = getRecordWithoutSruHeader(otherDocument);
-                List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
-                for (Element field : fieldList) {
-                    if (field.getAttributeValue("tag").equals("954")) {
+                if (otherRecord == null) {
+                    Helper.setFehlerMeldung("import_OtherEPNNotFound");
+                } else {
+
+                    List<Element> controlList = otherRecord.getChildren("controlfield", MARC);
+                    for (Element field : controlList) {
+                        if (field.getAttributeValue("tag").equals("001")) {
+                            otherPpn = field.getText();
+                        }
+                    }
+
+                    List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
+                    for (Element field : fieldList) {
+                        String tag = field.getAttributeValue("tag");
                         List<Element> subfields = field.getChildren();
                         for (Element sub : subfields) {
                             String code = sub.getAttributeValue("code");
-                            if (code.equals("b")) {
+                            // anchor identifier
+                            if (tag.equals("773") && code.equals("w")) {
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            } else if (tag.equals("800") && code.equals("w")) {
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            } else if (tag.equals("810") && code.equals("w")) {
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            } else if (tag.equals("830") && code.equals("w")) {
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            } else if (tag.equals("954") && code.equals("b")) {
                                 if (otherEpn == null) {
                                     otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
                                 } else {
                                     foundMultipleEpns = true;
                                 }
                             }
-                        }
-                    }
-                }
-            }
-        }
-        if (otherEpn != null) {
-            Element datafield = new Element("datafield", MARC);
-            datafield.setAttribute("tag", "epnDigital");
-            datafield.setAttribute("ind1", "");
-            datafield.setAttribute("ind2", "");
-
-            Element subfield = new Element("subfield", MARC);
-            subfield.setAttribute("code", "a");
-            subfield.setText(otherEpn);
-            datafield.addContent(subfield);
-            data.add(datafield);
-        }
-
-        org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
-
-        if (isMultiVolume) {
-            // TODO other record
-            String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
-            Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
-
-            Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
-
-            if (anchorRecord != null) {
-
-                List<Element> anchorData = anchorRecord.getChildren();
-                String otherAnchorPPN = null;
-                for (Element el : anchorData) {
-                    if (el.getName().equalsIgnoreCase("datafield")) {
-                        String tag = el.getAttributeValue("tag");
-                        if (tag.equals("776")) {
-                            List<Element> subfields = el.getChildren();
-                            for (Element sub : subfields) {
-                                String code = sub.getAttributeValue("code");
-                                // anchor identifier
-                                if (code.equals("w")) {
-                                    otherAnchorPPN = sub.getText().replaceAll("\\(.+\\)", "");
-                                }
-                            }
 
                         }
                     }
                 }
+                if (otherPpn != null) {
+                    Element datafield = new Element("datafield", MARC);
+                    datafield.setAttribute("tag", "ppnDigital");
+                    datafield.setAttribute("ind1", "");
+                    datafield.setAttribute("ind2", "");
 
-                if (otherAnchorPPN != null) {
-                    String otherResult = SRUHelper.search(catalogue, schema, "pica.ppn", otherAnchorPPN, packing, version);
-                    Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
-                    if (otherDocument != null) {
-                        Element otherRecord = getRecordWithoutSruHeader(otherDocument);
-                        List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
-                        for (Element field : fieldList) {
-                            if (field.getAttributeValue("tag").equals("954")) {
-                                List<Element> subfields = field.getChildren();
-                                for (Element sub : subfields) {
-                                    String code = sub.getAttributeValue("code");
-                                    if (code.equals("b")) {
-                                        if (otherEpn == null) {
-                                            otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
-                                        } else {
-                                            foundMultipleEpns = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Element subfield = new Element("subfield", MARC);
+                    subfield.setAttribute("code", "a");
+                    subfield.setText(otherPpn);
+                    datafield.addContent(subfield);
+                    data.add(datafield);
                 }
                 if (otherEpn != null) {
                     Element datafield = new Element("datafield", MARC);
@@ -239,9 +214,83 @@ public class SRUHelper {
                     subfield.setAttribute("code", "a");
                     subfield.setText(otherEpn);
                     datafield.addContent(subfield);
-                    anchorData.add(datafield);
+                    data.add(datafield);
                 }
+            }
+        }
+        org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
 
+        if (isMultiVolume) {
+            // get anchor record
+            String anchorResult = SRUHelper.search(catalogue, schema, "pica.ppn", anchorPpn, packing, version);
+            Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
+
+            Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
+
+            if (anchorRecord != null) {
+                List<Element> anchorData = anchorRecord.getChildren();
+
+                // get EPN/PPN digital for anchor
+                String otherAnchorResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing, version);
+                Document otherAnchorDoc = new SAXBuilder().build(new StringReader(otherAnchorResult), "utf-8");
+                Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc);
+
+                if (otherAnchorRecord == null) {
+                    Helper.setFehlerMeldung("import_OtherEPNNotFound");
+                } else {
+
+
+
+                    List<Element> controlList = otherAnchorRecord.getChildren("controlfield", MARC);
+                    for (Element field : controlList) {
+                        if (field.getAttributeValue("tag").equals("001")) {
+                            otherAnchorPpn = field.getText();
+                        }
+                    }
+
+                    List<Element> fieldList = otherAnchorRecord.getChildren("datafield", MARC);
+                    for (Element field : fieldList) {
+                        if (field.getAttributeValue("tag").equals("954")) {
+                            List<Element> subfields = field.getChildren();
+                            for (Element sub : subfields) {
+                                String code = sub.getAttributeValue("code");
+                                if (code.equals("b")) {
+                                    if (otherAnchorEpn == null) {
+                                        otherAnchorEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                    } else {
+                                        foundMultipleEpns = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (otherAnchorPpn != null) {
+                        Element datafield = new Element("datafield", MARC);
+                        datafield.setAttribute("tag", "ppnDigital");
+                        datafield.setAttribute("ind1", "");
+                        datafield.setAttribute("ind2", "");
+
+                        Element subfield = new Element("subfield", MARC);
+                        subfield.setAttribute("code", "a");
+                        subfield.setText(otherAnchorPpn);
+                        datafield.addContent(subfield);
+                        anchorData.add(datafield);
+                    }
+
+                    if (otherAnchorEpn != null) {
+                        Element datafield = new Element("datafield", MARC);
+                        datafield.setAttribute("tag", "epnDigital");
+                        datafield.setAttribute("ind1", "");
+                        datafield.setAttribute("ind2", "");
+
+                        Element subfield = new Element("subfield", MARC);
+                        subfield.setAttribute("code", "a");
+                        subfield.setText(otherAnchorEpn);
+                        datafield.addContent(subfield);
+                        anchorData.add(datafield);
+                    }
+                }
                 org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
 
                 collection.appendChild(anchorMarcRecord);
@@ -326,7 +375,11 @@ public class SRUHelper {
         // <srw:records>
         Element srw_records = root.getChild("records", SRW);
         // <srw:record>
+        if (srw_records == null) {
+            return null;
+        }
         List<Element> srw_recordList = srw_records.getChildren("record", SRW);
+
         // <srw:recordData>
         if (srw_recordList == null || srw_recordList.isEmpty()) {
             return null;

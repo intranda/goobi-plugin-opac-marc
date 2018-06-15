@@ -50,7 +50,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
     protected String gattung = "Aa";
     protected String atstsl;
     protected ConfigOpacCatalogue coc;
-    protected String sruSchema = "";
+    protected String sruSchema = "marcxml";
 
     protected String packing = null;
     protected String version = null;
@@ -71,6 +71,8 @@ public class GbvMarcSruImport implements IOpacPlugin {
             searchField = "pica.isb";
         } else if (inSuchfeld.equals("8")) {
             searchField = "pica.iss";
+        } else {
+            searchField =inSuchfeld;
         }
 
         SRUHelper.setMarcNamespace(marcNamespace);

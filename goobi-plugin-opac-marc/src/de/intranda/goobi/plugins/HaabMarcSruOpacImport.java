@@ -38,6 +38,7 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
         super.setSruSchema("marcxml");
     }
 
+
     @Override
     public Fileformat search(String inSuchfeld, String searchValue, ConfigOpacCatalogue cat, Prefs inPrefs) throws Exception {
         coc = cat;

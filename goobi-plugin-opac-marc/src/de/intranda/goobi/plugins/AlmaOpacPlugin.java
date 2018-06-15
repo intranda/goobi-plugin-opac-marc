@@ -10,15 +10,18 @@ public class AlmaOpacPlugin extends GbvMarcSruImport implements IOpacPlugin {
     public AlmaOpacPlugin() {
         super();
         super.setVersion("1.2");
-        super.setIdentifierSearchFieldPrefix("other_system_number");
+        super.setIdentifierSearchFieldPrefix("alma.local_control_field_009");
         super.setMarcNamespace(null);
+        super.setSruSchema("marcxml");
     }
-    
+
+    @Override
     public String getTitle() {
         return "ALMA-MARC";
     }
 
-    
+
+    @Override
     public String getDescription() {
         return "ALMA-MARC";
     }
