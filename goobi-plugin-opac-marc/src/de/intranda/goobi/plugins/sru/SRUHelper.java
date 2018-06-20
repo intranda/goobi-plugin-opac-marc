@@ -148,7 +148,7 @@ public class SRUHelper {
             }
         }
 
-        // TODO search for pica.zdb for periodca
+        //  search for pica.zdb for periodca
         // get digital epn from digital ppn record
         if (otherPpn != null) {
             String otherResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherPpn, packing, version);
