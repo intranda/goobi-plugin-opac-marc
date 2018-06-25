@@ -76,8 +76,8 @@ public class SRUHelper {
         return "";
     }
 
-    public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString,
-            String packing, String version) throws IOException, JDOMException, ParserConfigurationException {
+    public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String searchValue,
+            String resultString, String packing, String version) throws IOException, JDOMException, ParserConfigurationException {
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
@@ -138,10 +138,19 @@ public class SRUHelper {
                     } else if (tag.equals("776") && code.equals("w")) {
                         otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("954") && code.equals("b")) {
-                        if (currentEpn == null) {
+                        if (searchField.equals("pica.epn")) {
+                            // TODO remove wrong epns
                             currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            if (!searchValue.equals(currentEpn)) {
+                                sub.setAttribute("code", "invalid");
+                            }
+
                         } else {
-                            foundMultipleEpns = true;
+                            if (currentEpn == null) {
+                                currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            } else {
+                                foundMultipleEpns = true;
+                            }
                         }
                     }
                 }
@@ -231,15 +240,14 @@ public class SRUHelper {
                 List<Element> anchorData = anchorRecord.getChildren();
 
                 // get EPN/PPN digital for anchor
-                String otherAnchorResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing, version);
+                String otherAnchorResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing,
+                        version);
                 Document otherAnchorDoc = new SAXBuilder().build(new StringReader(otherAnchorResult), "utf-8");
                 Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc);
 
                 if (otherAnchorRecord == null) {
                     Helper.setFehlerMeldung("import_OtherEPNNotFound");
                 } else {
-
-
 
                     List<Element> controlList = otherAnchorRecord.getChildren("controlfield", MARC);
                     for (Element field : controlList) {

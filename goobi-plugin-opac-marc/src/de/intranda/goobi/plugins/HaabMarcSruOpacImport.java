@@ -81,10 +81,11 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
 
         SRUHelper.setMarcNamespace(getMarcNamespace());
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
-        Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, value, packing, version);
+        Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, searchValue, value, packing, version);
         if (node == null) {
             return null;
         }
+
         Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
         ConfigOpacDoctype codt = getOpacDocType();
