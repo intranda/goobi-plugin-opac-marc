@@ -139,12 +139,16 @@ public class SRUHelper {
                         otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("954") && code.equals("b")) {
                         if (searchField.equals("pica.epn")) {
-                            // TODO remove wrong epns
+                            // remove wrong epns
                             currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
                             if (!searchValue.equals(currentEpn)) {
                                 sub.setAttribute("code", "invalid");
+                                for (Element exemplarData : subfields) {
+                                    if (exemplarData.getAttributeValue("code").equals("d")) {
+                                        exemplarData.setAttribute("code", "invalid");
+                                    }
+                                }
                             }
-
                         } else {
                             if (currentEpn == null) {
                                 currentEpn = sub.getText().replaceAll("\\(.+\\)", "");

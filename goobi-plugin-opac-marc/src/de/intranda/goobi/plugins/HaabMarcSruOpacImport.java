@@ -45,9 +45,9 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
     //  1.) Suche nach EPN
     //  2.) Suche nach zweiten Datensatz durch PPN Suche aus 776$w
     //  3.) Suche nach zweiter EPN aus 954$b
-    //  4.) Warnung, falls 954$b mehrfach vorkommt
+    //  4.) Warnung, falls 954$b in O-Satz mehrfach vorkommt
     //  5.) ATS generieren
-    // TODO 6.) Mehrbändige Werke
+    //  6.) Mehrbändige Werke
 
 
     @Getter
