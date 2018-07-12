@@ -23,6 +23,7 @@
 
 package de.intranda.goobi.plugins;
 
+import java.text.Normalizer;
 import java.util.StringTokenizer;
 
 import org.goobi.production.enums.PluginType;
@@ -72,7 +73,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         } else if (inSuchfeld.equals("8")) {
             searchField = "pica.iss";
         } else {
-            searchField =inSuchfeld;
+            searchField = inSuchfeld;
         }
 
         SRUHelper.setMarcNamespace(marcNamespace);
@@ -171,6 +172,11 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
     @Override
     public String createAtstsl(String title, String author) {
+        title = Normalizer.normalize(title, Normalizer.Form.NFC);
+        if (author != null) {
+            author = Normalizer.normalize(author, Normalizer.Form.NFC);
+        }
+
         StringBuilder result = new StringBuilder(8);
         if (author != null && author.trim().length() > 0) {
             result.append(author.length() > 4 ? author.substring(0, 4) : author);
