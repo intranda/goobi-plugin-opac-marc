@@ -136,12 +136,20 @@ public class SRUHelper {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("776") && code.equals("w")) {
-                        otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        if (otherPpn == null) {
+                            // found first/only occurrence
+                            otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        } else {
+                            otherPpn = null;
+                            foundMultipleEpns = true;
+                        }
+
+
                     } else if (tag.equals("954") && code.equals("b")) {
                         if (searchField.equals("pica.epn")) {
                             // remove wrong epns
                             currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
-                            if (!searchValue.equals(currentEpn)) {
+                            if (!searchValue.trim().equals(currentEpn)) {
                                 sub.setAttribute("code", "invalid");
                                 for (Element exemplarData : subfields) {
                                     if (exemplarData.getAttributeValue("code").equals("d")) {
@@ -199,6 +207,7 @@ public class SRUHelper {
                                     otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
                                 } else {
                                     foundMultipleEpns = true;
+                                    otherEpn = null;
                                 }
                             }
 
@@ -217,7 +226,7 @@ public class SRUHelper {
                     datafield.addContent(subfield);
                     data.add(datafield);
                 }
-                if (otherEpn != null) {
+                if (otherEpn != null && !foundMultipleEpns) {
                     Element datafield = new Element("datafield", MARC);
                     datafield.setAttribute("tag", "epnDigital");
                     datafield.setAttribute("ind1", "");
@@ -290,7 +299,7 @@ public class SRUHelper {
                         anchorData.add(datafield);
                     }
 
-                    if (otherAnchorEpn != null) {
+                    if (otherAnchorEpn != null && !foundMultipleEpns) {
                         Element datafield = new Element("datafield", MARC);
                         datafield.setAttribute("tag", "epnDigital");
                         datafield.setAttribute("ind1", "");
