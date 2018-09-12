@@ -83,6 +83,9 @@ public class GbvMarcSruImport implements IOpacPlugin {
             return null;
         }
         Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
+        if (ff == null || ff.getDigitalDocument().getLogicalDocStruct() == null || ff.getDigitalDocument().getLogicalDocStruct().getType() == null) {
+            return null;
+        }
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
         ConfigOpacDoctype codt = getOpacDocType();
         if (codt.isPeriodical()) {
