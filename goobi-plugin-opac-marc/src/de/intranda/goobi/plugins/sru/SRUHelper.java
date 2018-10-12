@@ -90,6 +90,8 @@ public class SRUHelper {
         }
         opac.setHitcount(1);
         boolean isPeriodical = false;
+        boolean isManuscript = false;
+        boolean isCartographic = false;
         boolean isMultiVolume = false;
         String anchorPpn = null;
         String otherAnchorPpn = null;
@@ -111,11 +113,16 @@ public class SRUHelper {
         for (Element el : data) {
             if (el.getName().equalsIgnoreCase("leader")) {
                 String value = el.getText();
-                char c5 = value.toCharArray()[6];
-                char c6 = value.toCharArray()[7];
-                if (c5 == 'a' && (c6 == 's' || c6 == 'd')) {
+                char c6 = value.toCharArray()[6];
+                char c7 = value.toCharArray()[7];
+                if (c6 == 'a' && (c7 == 's' || c7 == 'd')) {
                     isPeriodical = true;
+                } else if (c6 == 't') {
+                    isManuscript = true;
+                } else if (c6 == 'e') {
+                    isCartographic = true;
                 }
+
             }
             if (el.getName().equalsIgnoreCase("datafield")) {
                 String tag = el.getAttributeValue("tag");
@@ -129,10 +136,10 @@ public class SRUHelper {
                     } else if (tag.equals("800") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                    } else if (tag.equals("810") && code.equals("w")) {
+                    } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                    } else if (tag.equals("830") && code.equals("w")) {
+                    } else if (isCartographic && tag.equals("830") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("776") && code.equals("w")) {
@@ -143,7 +150,6 @@ public class SRUHelper {
                             otherPpn = null;
                             foundMultipleEpns = true;
                         }
-
 
                     } else if (tag.equals("954") && code.equals("b")) {
                         if (searchField.equals("pica.epn")) {
@@ -198,9 +204,9 @@ public class SRUHelper {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                             } else if (tag.equals("800") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                            } else if (tag.equals("810") && code.equals("w")) {
+                            } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                            } else if (tag.equals("830") && code.equals("w")) {
+                            } else if (isCartographic && tag.equals("830") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                             } else if (tag.equals("954") && code.equals("b")) {
                                 if (otherEpn == null) {
