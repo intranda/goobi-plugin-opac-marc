@@ -10,7 +10,7 @@
 	<property name="filename" value="plugin_intranda_opac_marc" />
 	<property name="dir.build" value="bin" />
 	<property name="dir.deploy" value="deploy" />
-	<property name="pluginFolderWin" value="C:/Goobi/plugins/opac/" />
+	<property name="pluginFolderWin" value="C:/digiverso/goobi/plugins/opac/" />
 	<property name="pluginFolderUnix" value="/opt/digiverso/goobi/plugins/opac/" />
 
 	<path id="classpath">
@@ -71,7 +71,7 @@
 	</target>
 	<target name="win32" if="isWindows">
 		<echo>Using Windows path: ${pluginFolderWin}</echo>
-		<copy tofile="${pluginFolderWin}$${filename}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
+		<copy tofile="${pluginFolderWin}${filename}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
 	</target>
 
 	<!-- ================================= 
