@@ -93,6 +93,8 @@ public class SRUHelper {
         boolean isManuscript = false;
         boolean isCartographic = false;
         boolean isMultiVolume = false;
+        boolean isFSet = false;
+
         String anchorPpn = null;
         String otherAnchorPpn = null;
         String otherAnchorEpn = null;
@@ -115,12 +117,16 @@ public class SRUHelper {
                 String value = el.getText();
                 char c6 = value.toCharArray()[6];
                 char c7 = value.toCharArray()[7];
+                char c19 = value.toCharArray()[19];
                 if (c6 == 'a' && (c7 == 's' || c7 == 'd')) {
                     isPeriodical = true;
                 } else if (c6 == 't') {
                     isManuscript = true;
                 } else if (c6 == 'e') {
                     isCartographic = true;
+                }
+                if (c19 == 'b' || c19 == 'c') {
+                    isFSet = true;
                 }
 
             }
@@ -139,9 +145,11 @@ public class SRUHelper {
                     } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                    } else if (isCartographic && tag.equals("830") && code.equals("w")) {
-                        isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                    } else if (tag.equals("830") && code.equals("w")) {
+                        if (isCartographic || (isFSet && anchorPpn == null)) {
+                            isMultiVolume = true;
+                            anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        }
                     } else if (tag.equals("776") && code.equals("w")) {
                         if (otherPpn == null) {
                             // found first/only occurrence
