@@ -136,7 +136,7 @@ public class SRUHelper {
                 for (Element sub : subfields) {
                     String code = sub.getAttributeValue("code");
                     // anchor identifier
-                    if (!isManuscript && tag.equals("773") && code.equals("w")) {
+                    if (tag.equals("773") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                     } else if (tag.equals("800") && code.equals("w")) {
