@@ -77,7 +77,8 @@ public class SRUHelper {
     }
 
     public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String searchValue,
-            String resultString, String packing, String version) throws IOException, JDOMException, ParserConfigurationException {
+            String resultString, String packing, String version, boolean ignoreAnchor) throws IOException, JDOMException,
+    ParserConfigurationException {
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
@@ -137,8 +138,12 @@ public class SRUHelper {
                     String code = sub.getAttributeValue("code");
                     // anchor identifier
                     if (tag.equals("773") && code.equals("w")) {
-                        isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        if (ignoreAnchor) {
+                            sub.setText("");
+                        } else {
+                            isMultiVolume = true;
+                            anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        }
                     } else if (tag.equals("800") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
