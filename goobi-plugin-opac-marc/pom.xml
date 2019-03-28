@@ -5,7 +5,7 @@
 >
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.intranda.goobi.plugins.opac</groupId>
-    <artifactId>marc</artifactId>
+    <artifactId>marc-deps</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>marc</name>
