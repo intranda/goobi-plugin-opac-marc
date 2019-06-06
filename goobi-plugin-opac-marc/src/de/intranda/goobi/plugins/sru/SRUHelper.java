@@ -77,7 +77,8 @@ public class SRUHelper {
     }
 
     public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String searchValue,
-            String resultString, String packing, String version) throws IOException, JDOMException, ParserConfigurationException {
+            String resultString, String packing, String version, boolean ignoreAnchor) throws IOException, JDOMException,
+    ParserConfigurationException {
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
@@ -93,6 +94,8 @@ public class SRUHelper {
         boolean isManuscript = false;
         boolean isCartographic = false;
         boolean isMultiVolume = false;
+        boolean isFSet = false;
+
         String anchorPpn = null;
         String otherAnchorPpn = null;
         String otherAnchorEpn = null;
@@ -115,12 +118,16 @@ public class SRUHelper {
                 String value = el.getText();
                 char c6 = value.toCharArray()[6];
                 char c7 = value.toCharArray()[7];
+                char c19 = value.toCharArray()[19];
                 if (c6 == 'a' && (c7 == 's' || c7 == 'd')) {
                     isPeriodical = true;
                 } else if (c6 == 't') {
                     isManuscript = true;
                 } else if (c6 == 'e') {
                     isCartographic = true;
+                }
+                if (c19 == 'b' || c19 == 'c') {
+                    isFSet = true;
                 }
 
             }
@@ -131,21 +138,31 @@ public class SRUHelper {
                     String code = sub.getAttributeValue("code");
                     // anchor identifier
                     if (tag.equals("773") && code.equals("w")) {
-                        isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        if (ignoreAnchor) {
+                            sub.setText("");
+                        } else if (isFSet || isPeriodical) {
+                            isMultiVolume = true;
+                            anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            ;
+                        }
                     } else if (tag.equals("800") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                     } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                    } else if (isCartographic && tag.equals("830") && code.equals("w")) {
-                        isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                        ;
+                    } else if (tag.equals("830") && code.equals("w")) {
+                        if (isCartographic || (isFSet && anchorPpn == null)) {
+                            isMultiVolume = true;
+                            anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            ;
+                        }
                     } else if (tag.equals("776") && code.equals("w")) {
                         if (otherPpn == null) {
                             // found first/only occurrence
-                            otherPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            otherPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            ;
                         } else {
                             otherPpn = null;
                             foundMultipleEpns = true;
@@ -154,7 +171,8 @@ public class SRUHelper {
                     } else if (tag.equals("954") && code.equals("b")) {
                         if (searchField.equals("pica.epn")) {
                             // remove wrong epns
-                            currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                            currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            ;
                             if (!searchValue.trim().equals(currentEpn)) {
                                 sub.setAttribute("code", "invalid");
                                 for (Element exemplarData : subfields) {
@@ -165,7 +183,8 @@ public class SRUHelper {
                             }
                         } else {
                             if (currentEpn == null) {
-                                currentEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                ;
                             } else {
                                 foundMultipleEpns = true;
                             }
@@ -196,21 +215,29 @@ public class SRUHelper {
                     List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
                     for (Element field : fieldList) {
                         String tag = field.getAttributeValue("tag");
+                        if (tag.equals("954")) {
+                            System.out.println("found epn");
+                        }
                         List<Element> subfields = field.getChildren();
                         for (Element sub : subfields) {
                             String code = sub.getAttributeValue("code");
                             // anchor identifier
                             if (tag.equals("773") && code.equals("w")) {
-                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                ;
                             } else if (tag.equals("800") && code.equals("w")) {
-                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                ;
                             } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                             } else if (isCartographic && tag.equals("830") && code.equals("w")) {
-                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                ;
                             } else if (tag.equals("954") && code.equals("b")) {
                                 if (otherEpn == null) {
-                                    otherEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                    otherEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                    ;
+                                    System.out.println("epn found " + otherEpn);
                                 } else {
                                     foundMultipleEpns = true;
                                     otherEpn = null;
@@ -283,7 +310,8 @@ public class SRUHelper {
                                 String code = sub.getAttributeValue("code");
                                 if (code.equals("b")) {
                                     if (otherAnchorEpn == null) {
-                                        otherAnchorEpn = sub.getText().replaceAll("\\(.+\\)", "");
+                                        otherAnchorEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                        ;
                                     } else {
                                         foundMultipleEpns = true;
                                     }
@@ -357,10 +385,31 @@ public class SRUHelper {
             answer.appendChild(collection);
 
             boolean isMultiVolume = false;
+            boolean isPeriodical = false;
+            boolean isManuscript = false;
+            boolean isCartographic = false;
+
             String anchorIdentifier = "";
             List<Element> data = record.getChildren();
 
             for (Element el : data) {
+                if (el.getName().equalsIgnoreCase("leader")) {
+                    String value = el.getText();
+                    char c6 = value.toCharArray()[6];
+                    char c7 = value.toCharArray()[7];
+                    char c19 = value.toCharArray()[19];
+                    if (c6 == 'a' && (c7 == 's' || c7 == 'd')) {
+                        isPeriodical = true;
+                    } else if (c6 == 't') {
+                        isManuscript = true;
+                    } else if (c6 == 'e') {
+                        isCartographic = true;
+                    }
+                    if (c19 == 'b' || c19 == 'c') {
+                        isMultiVolume = true;
+                    }
+                }
+
                 if (el.getName().equalsIgnoreCase("datafield")) {
                     String tag = el.getAttributeValue("tag");
                     List<Element> subfields = el.getChildren();
@@ -368,8 +417,20 @@ public class SRUHelper {
                         String code = sub.getAttributeValue("code");
                         // anchor identifier
                         if (tag.equals("773") && code.equals("w")) {
+                            if (!isMultiVolume && !isPeriodical) {
+                                sub.setText("");
+                            } else {
+                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            }
+                        } else if (tag.equals("800") && code.equals("w") && isMultiVolume) {
+                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                        } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                             isMultiVolume = true;
-                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "");
+                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                        } else if (tag.equals("830") && code.equals("w")) {
+                            if (isCartographic || (isMultiVolume && anchorIdentifier == null)) {
+                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            }
                         }
                     }
                 }
@@ -378,7 +439,6 @@ public class SRUHelper {
             org.w3c.dom.Element marcRecord = getRecord(answer, data, opac);
 
             if (isMultiVolume) {
-                // TODO
                 String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 

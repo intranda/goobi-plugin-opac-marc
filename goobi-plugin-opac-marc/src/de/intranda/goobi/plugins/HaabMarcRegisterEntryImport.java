@@ -40,7 +40,7 @@ import ugh.exceptions.TypeNotAllowedForParentException;
 
 @PluginImplementation
 
-public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlugin {
+public class HaabMarcRegisterEntryImport extends GbvMarcSruImport implements IOpacPlugin {
 
     //  1.) Suche nach EPN
     //  2.) Suche nach zweiten Datensatz durch PPN Suche aus 776$w
@@ -51,9 +51,9 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
 
 
     @Getter
-    private String title = "HaabMarcSru";
+    private String title = "HaabStammbucheintrag";
 
-    public HaabMarcSruOpacImport() {
+    public HaabMarcRegisterEntryImport() {
         super();
         super.setVersion("1.2");
         super.setIdentifierSearchFieldPrefix("pica.epn");
@@ -81,7 +81,7 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
 
         SRUHelper.setMarcNamespace(getMarcNamespace());
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
-        Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, searchValue, value, packing, version, false);
+        Node node = SRUHelper.parseHaabResult(this, catalogue, sruSchema, searchField, searchValue, value, packing, version, true);
         if (node == null) {
             return null;
         }
