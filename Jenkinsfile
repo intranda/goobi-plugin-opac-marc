@@ -28,6 +28,16 @@ pipeline {
         recordIssues enabledForFailure: true, aggregatingResults: true, tools: [java(), javaDoc()]
       }
     }
+    stage('deployment to maven repository') {
+      when {
+        anyOf {
+          branch 'master'
+        }
+        steps {
+          sh 'mvn -f goobi-plugin-opac-marc/pom.xml deploy'
+        }
+      }
+    }
   }
   
   post {
