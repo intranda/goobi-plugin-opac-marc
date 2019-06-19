@@ -112,6 +112,7 @@ public class SRUHelper {
         org.w3c.dom.Element collection = answer.createElement("collection");
         answer.appendChild(collection);
 
+        boolean shelfmarkFound = false;
         List<Element> data = record.getChildren();
         for (Element el : data) {
             if (el.getName().equalsIgnoreCase("leader")) {
@@ -134,6 +135,7 @@ public class SRUHelper {
             if (el.getName().equalsIgnoreCase("datafield")) {
                 String tag = el.getAttributeValue("tag");
                 List<Element> subfields = el.getChildren();
+                boolean isCurrentEpn = false;
                 for (Element sub : subfields) {
                     String code = sub.getAttributeValue("code");
                     // anchor identifier
@@ -143,7 +145,7 @@ public class SRUHelper {
                         } else if (isFSet || isPeriodical) {
                             isMultiVolume = true;
                             anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            ;
+
                         }
                     } else if (tag.equals("800") && code.equals("w")) {
                         isMultiVolume = true;
@@ -151,42 +153,51 @@ public class SRUHelper {
                     } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        ;
+
                     } else if (tag.equals("830") && code.equals("w")) {
                         if (isCartographic || (isFSet && anchorPpn == null)) {
                             isMultiVolume = true;
                             anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            ;
+
                         }
                     } else if (tag.equals("776") && code.equals("w")) {
                         if (otherPpn == null) {
                             // found first/only occurrence
                             otherPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            ;
+
                         } else {
                             otherPpn = null;
                             foundMultipleEpns = true;
                         }
 
-                    } else if (tag.equals("954") && code.equals("b")) {
-                        if (searchField.equals("pica.epn")) {
-                            // remove wrong epns
-                            currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            ;
-                            if (!searchValue.trim().equals(currentEpn)) {
-                                sub.setAttribute("code", "invalid");
-                                for (Element exemplarData : subfields) {
-                                    if (exemplarData.getAttributeValue("code").equals("d")) {
-                                        exemplarData.setAttribute("code", "invalid");
+                    } else if (tag.equals("954")) {
+                        if (code.equals("b")) {
+                            if (searchField.equals("pica.epn")) {
+                                // remove wrong epns
+                                currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                isCurrentEpn = true;
+                                if (!searchValue.trim().equals(currentEpn)) {
+                                    sub.setAttribute("code", "invalid");
+                                    for (Element exemplarData : subfields) {
+                                        if (exemplarData.getAttributeValue("code").equals("d")) {
+                                            exemplarData.setAttribute("code", "invalid");
+                                        }
                                     }
                                 }
-                            }
-                        } else {
-                            if (currentEpn == null) {
-                                currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                ;
                             } else {
-                                foundMultipleEpns = true;
+                                if (currentEpn == null) {
+                                    isCurrentEpn = true;
+                                    currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+
+                                } else {
+                                    foundMultipleEpns = true;
+                                }
+                            }
+                        } else if (code.equals("d") ) {
+                            if (!shelfmarkFound && isCurrentEpn) {
+                                shelfmarkFound = true;
+                            } else {
+                                sub.setAttribute("code", "invalid");
                             }
                         }
                     }
