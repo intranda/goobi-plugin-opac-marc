@@ -226,29 +226,22 @@ public class SRUHelper {
                     List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
                     for (Element field : fieldList) {
                         String tag = field.getAttributeValue("tag");
-                        if (tag.equals("954")) {
-                            System.out.println("found epn");
-                        }
+
                         List<Element> subfields = field.getChildren();
                         for (Element sub : subfields) {
                             String code = sub.getAttributeValue("code");
                             // anchor identifier
                             if (tag.equals("773") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                ;
                             } else if (tag.equals("800") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                ;
                             } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
                             } else if (isCartographic && tag.equals("830") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                ;
                             } else if (tag.equals("954") && code.equals("b")) {
                                 if (otherEpn == null) {
                                     otherEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                    ;
-                                    System.out.println("epn found " + otherEpn);
                                 } else {
                                     foundMultipleEpns = true;
                                     otherEpn = null;
