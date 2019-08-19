@@ -77,8 +77,8 @@ public class SRUHelper {
     }
 
     public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String searchValue,
-            String resultString, String packing, String version, boolean ignoreAnchor) throws IOException, JDOMException,
-    ParserConfigurationException {
+            String resultString, String packing, String version, boolean ignoreAnchor)
+                    throws IOException, JDOMException, ParserConfigurationException {
         SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
         builder.setFeature("http://xml.org/sax/features/validation", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
@@ -117,6 +117,9 @@ public class SRUHelper {
         for (Element el : data) {
             if (el.getName().equalsIgnoreCase("leader")) {
                 String value = el.getText();
+                if (value.length() < 24) {
+                    value = "00000" + value;
+                }
                 char c6 = value.toCharArray()[6];
                 char c7 = value.toCharArray()[7];
                 char c19 = value.toCharArray()[19];
@@ -193,7 +196,7 @@ public class SRUHelper {
                                     foundMultipleEpns = true;
                                 }
                             }
-                        } else if (code.equals("d") ) {
+                        } else if (code.equals("d")) {
                             if (!shelfmarkFound && isCurrentEpn) {
                                 shelfmarkFound = true;
                             } else {
@@ -290,8 +293,8 @@ public class SRUHelper {
                 List<Element> anchorData = anchorRecord.getChildren();
 
                 // get EPN/PPN digital for anchor
-                String otherAnchorResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing,
-                        version);
+                String otherAnchorResult =
+                        SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing, version);
                 Document otherAnchorDoc = new SAXBuilder().build(new StringReader(otherAnchorResult), "utf-8");
                 Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc);
 
@@ -399,6 +402,9 @@ public class SRUHelper {
             for (Element el : data) {
                 if (el.getName().equalsIgnoreCase("leader")) {
                     String value = el.getText();
+                    if (value.length() < 24) {
+                        value = "00000" + value;
+                    }
                     char c6 = value.toCharArray()[6];
                     char c7 = value.toCharArray()[7];
                     char c19 = value.toCharArray()[19];
@@ -481,8 +487,8 @@ public class SRUHelper {
         return record;
     }
 
-    public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn) throws ReadException, PreferencesException,
-    TypeNotAllowedForParentException {
+    public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn)
+            throws ReadException, PreferencesException, TypeNotAllowedForParentException {
 
         MarcFileformat pp = new MarcFileformat(prefs);
         pp.read(marc);
@@ -508,8 +514,11 @@ public class SRUHelper {
             if (datafield.getName().equals("leader") && leader == null) {
                 leader = answer.createElement("leader");
                 marcRecord.appendChild(leader);
-
-                Text text = answer.createTextNode(datafield.getText());
+                String ldr = datafield.getText();
+                if (ldr.length() < 24) {
+                    ldr = "00000" + ldr;
+                }
+                Text text = answer.createTextNode(ldr);
                 leader.appendChild(text);
 
                 // get the leader field as a datafield
