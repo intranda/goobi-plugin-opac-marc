@@ -14,18 +14,23 @@
     <modules>
         <module>module-main</module>
     </modules>
-    <distributionManagement>
-        <repository>
-            <id>intranda-releases</id>
-            <url>https://nexus.intranda.com/repository/maven-releases</url>
-        </repository>
-    </distributionManagement>
-    <repositories>
-        <repository>
-            <id>intranda-public</id>
-            <url>https://nexus.intranda.com/repository/maven-public</url>
-        </repository>
-    </repositories>
+    	<repositories>
+		<repository>
+			<id>intranda-public</id>
+			<url>https://nexus.intranda.com/repository/maven-public</url>
+		</repository>
+	</repositories>
+ 
+	<distributionManagement>
+		<repository>
+			<id>intranda-releases</id>
+			<url>https://nexus.intranda.com/repository/maven-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>intranda-snapshots</id>
+			<url>https://nexus.intranda.com/repository/maven-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
     <dependencies>
         <dependency>
             <groupId>de.intranda.goobi.workflow</groupId>
