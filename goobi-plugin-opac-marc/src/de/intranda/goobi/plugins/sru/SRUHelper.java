@@ -26,12 +26,14 @@ package de.intranda.goobi.plugins.sru;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.StringUtils;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -48,6 +50,8 @@ import de.intranda.goobi.plugins.GbvMarcSruImport;
 //import de.intranda.goobi.plugins.SwbMarcSruImport;
 import de.intranda.ugh.extension.MarcFileformat;
 import de.sub.goobi.helper.Helper;
+import de.unigoettingen.sub.search.opac.ConfigOpacCatalogueBeautifier;
+import de.unigoettingen.sub.search.opac.ConfigOpacCatalogueBeautifierElement;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
@@ -84,7 +88,7 @@ public class SRUHelper {
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
-        Element record = getRecordWithoutSruHeader(doc);
+        Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
         if (record == null) {
             opac.setHitcount(0);
             return null;
@@ -214,7 +218,7 @@ public class SRUHelper {
             String otherResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherPpn, packing, version);
             Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
             if (otherDocument != null) {
-                Element otherRecord = getRecordWithoutSruHeader(otherDocument);
+                Element otherRecord = getRecordWithoutSruHeader(otherDocument, opac.getCoc().getBeautifySetList());
                 if (otherRecord == null) {
                     Helper.setFehlerMeldung("import_OtherEPNNotFound");
                 } else {
@@ -287,7 +291,7 @@ public class SRUHelper {
             String anchorResult = SRUHelper.search(catalogue, schema, "pica.ppn", anchorPpn, packing, version);
             Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
-            Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
+            Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
 
             if (anchorRecord != null) {
                 List<Element> anchorData = anchorRecord.getChildren();
@@ -296,7 +300,7 @@ public class SRUHelper {
                 String otherAnchorResult =
                         SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing, version);
                 Document otherAnchorDoc = new SAXBuilder().build(new StringReader(otherAnchorResult), "utf-8");
-                Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc);
+                Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc, opac.getCoc().getBeautifySetList());
 
                 if (otherAnchorRecord == null) {
                     Helper.setFehlerMeldung("import_OtherEPNNotFound");
@@ -378,7 +382,7 @@ public class SRUHelper {
         builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         // srw:searchRetrieveResponse
-        Element record = getRecordWithoutSruHeader(doc);
+        Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
         if (record == null) {
             opac.setHitcount(0);
             return null;
@@ -452,7 +456,7 @@ public class SRUHelper {
                 String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
                 Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
 
-                Element anchorRecord = getRecordWithoutSruHeader(anchorDoc);
+                Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
                 if (anchorRecord != null) {
                     List<Element> anchorData = anchorRecord.getChildren();
                     org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
@@ -467,7 +471,7 @@ public class SRUHelper {
 
     }
 
-    public static Element getRecordWithoutSruHeader(Document document) {
+    public static Element getRecordWithoutSruHeader(Document document, List<ConfigOpacCatalogueBeautifier> beautifySetList) {
         Element root = document.getRootElement();
         // <srw:records>
         Element srw_records = root.getChild("records", SRW);
@@ -484,7 +488,174 @@ public class SRUHelper {
         Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
 
         Element record = recordData.getChild("record", MARC);
+
+        executeBeautifier(beautifySetList, record);
         return record;
+    }
+
+
+    /*
+     * usage:
+      <catalogue title="Example">
+        <config address="https://example.com" database="Example"
+                description="Example catalogue"
+                iktlist="IKTLIST.xml" port="80"  opacType="GBV-MARC"/>
+        <beautify>
+          <!-- replace pos 19 with a space, if leader 6 contains 'e' -->
+          <setvalue tag="leader19" subtag="" value="\u0020">
+            <condition tag="leader6" subtag="" value="e" />
+          </setvalue>
+          <!-- always write controlfield 999 with content the 'static text' -->
+          <setvalue tag="999" subtag="" value="static text" />
+          <!-- replace the language term 'lat' with 'ger' -->
+          <setvalue tag="041" subtag="a" value="ger">
+            <condition tag="041" subtag="a" value="lat" />
+          </setvalue>
+        </beautify>
+      </catalogue>
+
+     */
+
+    private static void executeBeautifier(List<ConfigOpacCatalogueBeautifier> beautifySetList, Element record) {
+
+
+        // run through all configured beautifier
+        if (beautifySetList != null && !beautifySetList.isEmpty()) {
+            for (ConfigOpacCatalogueBeautifier beautifier : beautifySetList) {
+                List<ConfigOpacCatalogueBeautifierElement> conditionList = new ArrayList<>(beautifier.getTagElementsToProof());
+                String newValue = null;
+
+                // first, check if the current rule has conditions, check if conditions apply
+                if (!conditionList.isEmpty()) {
+                    for (ConfigOpacCatalogueBeautifierElement condition : beautifier.getTagElementsToProof()) {
+                        for (Element field : record.getChildren()) {
+                            // check if condition was configured for a leader position (tag starts with leader)
+                            /*
+                             * <condition tag="leader6" subtag="" value="e" />
+                             */
+                            if (field.getName().equalsIgnoreCase("leader")) {
+                                if (condition.getTag().startsWith("leader")) {
+                                    int pos = Integer.parseInt(condition.getTag().replace("leader", ""));
+                                    // get value from pos, compare it with expected value
+                                    String value = field.getValue();
+                                    if (value.length() < 24) {
+                                        value = "00000" + value;
+                                    }
+                                    char c = value.toCharArray()[pos];
+                                    if (condition.getValue().equals("*") || condition.getValue().equals(Character.toString(c))) {
+                                        conditionList.remove(condition);
+                                    }
+                                }
+                            } else if (field.getName().equalsIgnoreCase("controlfield")) {
+                                // check if a condition was defined (tag is numeric, but no subtag is defined)
+                                /*
+                                 * <condition tag="008" subtag="" value="*lat*" />
+                                 */
+                                if (condition.getTag().equals(field.getAttributeValue("tag"))) {
+                                    // found field, now check if content matched
+                                    String value = field.getValue();
+                                    if (condition.getValue().equals("*") || value.matches(condition.getValue())) {
+                                        conditionList.remove(condition);
+                                        newValue = value;
+                                    }
+                                }
+                                // check if a condition was defined for datafield / subfield (tag and subtag are defined)
+                                /*
+                                 * <condition tag="041" subtag="a" value="lat" />
+                                 */
+                            } else if (field.getName().equalsIgnoreCase("datafield")) {
+                                if (condition.getTag().equals(field.getAttributeValue("tag"))) {
+                                    // found main field, check subfields
+                                    List<Element> subelements = field.getChildren();
+                                    for (Element subfield : subelements) {
+                                        String subtag = subfield.getAttributeValue("code");
+                                        if (condition.getSubtag().equals(subtag)) {
+                                            // found subfield, now check if content matched
+                                            if (condition.getValue().equals("*") || subfield.getText().matches(condition.getValue())) {
+                                                conditionList.remove(condition);
+                                                newValue = subfield.getText();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Element mainField = null;
+                Element subField = null;
+                // if conditions are fulfilled, search for field to change
+                if (conditionList.isEmpty()) {
+                    for (Element field : record.getChildren()) {
+                        if (field.getName().equalsIgnoreCase("leader")) {
+                            if (beautifier.getTagElementToChange().getTag().startsWith("leader")) {
+                                int pos = Integer.parseInt(beautifier.getTagElementToChange().getTag().replace("leader", ""));
+                                // create new leader, replace position with configured value
+                                String value = field.getText();
+                                value = value.substring(0, pos) + beautifier.getTagElementToChange().getValue().replace("\\u0020", " ")
+                                        + value.substring(pos + 1);
+                                newValue = value;
+                                mainField = field;
+                            }
+                        } else if (field.getName().equalsIgnoreCase("controlfield")) {
+                            if (beautifier.getTagElementToChange().getTag().equals(field.getAttributeValue("tag"))) {
+                                // found field to change
+                                mainField = field;
+
+                            }
+
+                        } else if (field.getName().equalsIgnoreCase("datafield")) {
+                            if (beautifier.getTagElementToChange().getTag().equals(field.getAttributeValue("tag"))) {
+                                // found main field, check subfields
+                                mainField = field;
+                                List<Element> subelements = field.getChildren();
+                                for (Element subfield : subelements) {
+                                    String subtag = subfield.getAttributeValue("code");
+                                    if (beautifier.getTagElementToChange().getSubtag().equals(subtag)) {
+                                        // found subfield to change
+                                        subField = subfield;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // if '*' was used, replace current value with value from condition, otherwise use value from configuration
+                    //
+                    if (!"*".equals(beautifier.getTagElementToChange().getValue())) {
+                        newValue = beautifier.getTagElementToChange().getValue().replace("\\u0020", " ");
+                    }
+                    // replace existing field or create a new field
+                    if (beautifier.getTagElementToChange().getTag().startsWith("leader") && mainField != null) {
+                        mainField.setText(newValue);
+                    } else if (newValue != null) {
+                        if (StringUtils.isNotBlank(beautifier.getTagElementToChange().getTag())
+                                && StringUtils.isBlank(beautifier.getTagElementToChange().getSubtag())) {
+                            if (mainField == null) {
+                                mainField = new Element("controlfield", MARC);
+                                mainField.setAttribute("tag", beautifier.getTagElementToChange().getTag());
+                                record.addContent(mainField);
+                            }
+                            mainField.setText(newValue);
+                        } else {
+                            if (mainField == null) {
+                                mainField = new Element("datafield", MARC);
+                                mainField.setAttribute("tag", beautifier.getTagElementToChange().getTag());
+                                mainField.setAttribute("ind1", " ");
+                                mainField.setAttribute("ind2", " ");
+                                record.addContent(mainField);
+                            }
+                            if (subField == null) {
+                                subField = new Element("subfield", MARC);
+                                subField.setAttribute("code", beautifier.getTagElementToChange().getSubtag());
+                                mainField.addContent(subField);
+                            }
+                            subField.setText(newValue);
+                        }
+                    }
+                }
+
+            }
+        }
     }
 
     public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn)

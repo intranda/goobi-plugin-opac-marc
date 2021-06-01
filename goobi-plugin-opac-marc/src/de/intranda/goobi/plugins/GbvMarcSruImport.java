@@ -36,6 +36,7 @@ import de.sub.goobi.helper.UghHelper;
 import de.unigoettingen.sub.search.opac.ConfigOpac;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
 import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
+import lombok.Getter;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
@@ -50,6 +51,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
     private int hitcount;
     protected String gattung = "Aa";
     protected String atstsl;
+    @Getter
     protected ConfigOpacCatalogue coc;
     protected String sruSchema = "marcxml";
 
@@ -75,6 +77,8 @@ public class GbvMarcSruImport implements IOpacPlugin {
         } else {
             searchField = inSuchfeld;
         }
+
+
 
         SRUHelper.setMarcNamespace(marcNamespace);
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);

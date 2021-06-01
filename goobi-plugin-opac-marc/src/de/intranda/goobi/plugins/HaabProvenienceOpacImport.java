@@ -49,7 +49,7 @@ public class HaabProvenienceOpacImport extends GbvMarcSruImport implements IOpac
         String value = SRUHelper.search("http://sru.gbv.de/opac-de-32", sruSchema, "pica.epn", searchValue, packing, version);
         if (StringUtils.isNotBlank(value)) {
             Document document = new SAXBuilder().build(new StringReader(value), "utf-8");
-            picaRecord = SRUHelper.getRecordWithoutSruHeader(document);
+            picaRecord = SRUHelper.getRecordWithoutSruHeader(document, coc.getBeautifySetList());
 
         }
         return null;
