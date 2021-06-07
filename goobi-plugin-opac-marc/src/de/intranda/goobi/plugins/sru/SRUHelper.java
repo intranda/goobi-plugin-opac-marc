@@ -619,15 +619,16 @@ public class SRUHelper {
                             }
                         }
                     }
+                }
+                // replace existing field or create a new field
+                if (beautifier.getTagElementToChange().getTag().startsWith("leader") && mainField != null) {
+                    mainField.setText(newValue);
+                } else if (newValue != null) {
                     // if '*' was used, replace current value with value from condition, otherwise use value from configuration
                     //
                     if (!"*".equals(beautifier.getTagElementToChange().getValue())) {
                         newValue = beautifier.getTagElementToChange().getValue().replace("\\u0020", " ");
-                    }
-                    // replace existing field or create a new field
-                    if (beautifier.getTagElementToChange().getTag().startsWith("leader") && mainField != null) {
-                        mainField.setText(newValue);
-                    } else if (newValue != null) {
+
                         if (StringUtils.isNotBlank(beautifier.getTagElementToChange().getTag())
                                 && StringUtils.isBlank(beautifier.getTagElementToChange().getSubtag())) {
                             if (mainField == null) {
