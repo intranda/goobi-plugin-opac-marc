@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -41,6 +44,7 @@ import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.HttpClientHelper;
 
 /**
@@ -480,6 +484,14 @@ public class SRUClient {
         String response = null;
         CloseableHttpClient client = HttpClientBuilder.create().build();
         HttpGet method = new HttpGet(searchUrl);
+        // use configured proxy
+        if (ConfigurationHelper.getInstance().isUseProxy()) {
+            HttpHost proxy = new HttpHost(ConfigurationHelper.getInstance().getProxyUrl(), ConfigurationHelper.getInstance().getProxyPort());
+            Builder builder = RequestConfig.custom();
+            builder.setProxy(proxy);
+            RequestConfig rc = builder.build();
+            method.setConfig(rc);
+        }
         try {
             response = client.execute(method, HttpClientHelper.stringResponseHandler);
         } catch (IOException e) {
