@@ -34,6 +34,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
+//import org.goobi.api.sru.SRUClient;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -442,7 +443,7 @@ public class SRUHelper {
                             isMultiVolume = true;
                             anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                         } else if (tag.equals("830") && code.equals("w")) {
-                            if (isCartographic || (isMultiVolume && anchorIdentifier == null)) {
+                            if (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier))) {
                                 anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                             }
                         }
