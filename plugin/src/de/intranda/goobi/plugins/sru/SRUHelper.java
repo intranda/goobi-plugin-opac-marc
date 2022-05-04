@@ -34,6 +34,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
+import org.goobi.api.sru.SRUClient;
 //import org.goobi.api.sru.SRUClient;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
@@ -45,10 +46,7 @@ import org.jdom2.input.sax.XMLReaders;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
-import com.googlecode.fascinator.redbox.sru.SRUClient;
-
 import de.intranda.goobi.plugins.GbvMarcSruImport;
-//import de.intranda.goobi.plugins.SwbMarcSruImport;
 import de.intranda.ugh.extension.MarcFileformat;
 import de.sub.goobi.helper.Helper;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogueBeautifier;
