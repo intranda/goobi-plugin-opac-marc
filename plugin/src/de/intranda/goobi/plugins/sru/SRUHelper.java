@@ -69,6 +69,25 @@ public class SRUHelper {
         MARC = marc;
     }
 
+
+    public static SAXBuilder getSaxBuilder(boolean validation) {
+        SAXBuilder builder = null;
+        if (validation) {
+            builder = new SAXBuilder();
+        } else {
+            builder= new SAXBuilder(XMLReaders.NONVALIDATING);
+            builder.setFeature("http://xml.org/sax/features/validation", false);
+            builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        }
+
+        builder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        builder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        builder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
+        return builder;
+    }
+
     public static String search(String catalogue, String schema, String searchField, String searchValue, String packing, String version) {
         SRUClient client;
         try {
@@ -82,10 +101,8 @@ public class SRUHelper {
     public static Node parseHaabResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String searchValue,
             String resultString, String packing, String version, boolean ignoreAnchor)
                     throws IOException, JDOMException, ParserConfigurationException {
-        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
-        builder.setFeature("http://xml.org/sax/features/validation", false);
-        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        SAXBuilder builder = getSaxBuilder(false);
+
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
         if (record == null) {
@@ -159,7 +176,6 @@ public class SRUHelper {
                     } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-
                     } else if (tag.equals("830") && code.equals("w")) {
                         if (isCartographic || (isFSet && anchorPpn == null)) {
                             isMultiVolume = true;
@@ -215,7 +231,7 @@ public class SRUHelper {
         // get digital epn from digital ppn record
         if (otherPpn != null) {
             String otherResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherPpn, packing, version);
-            Document otherDocument = new SAXBuilder().build(new StringReader(otherResult), "utf-8");
+            Document otherDocument =  getSaxBuilder(true).build(new StringReader(otherResult), "utf-8");
             if (otherDocument != null) {
                 Element otherRecord = getRecordWithoutSruHeader(otherDocument, opac.getCoc().getBeautifySetList());
                 if (otherRecord == null) {
@@ -288,7 +304,7 @@ public class SRUHelper {
         if (isMultiVolume) {
             // get anchor record
             String anchorResult = SRUHelper.search(catalogue, schema, "pica.ppn", anchorPpn, packing, version);
-            Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
+            Document anchorDoc =  getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
 
             Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
 
@@ -298,7 +314,7 @@ public class SRUHelper {
                 // get EPN/PPN digital for anchor
                 String otherAnchorResult =
                         SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherAnchorPpn, packing, version);
-                Document otherAnchorDoc = new SAXBuilder().build(new StringReader(otherAnchorResult), "utf-8");
+                Document otherAnchorDoc = getSaxBuilder(true).build(new StringReader(otherAnchorResult), "utf-8");
                 Element otherAnchorRecord = getRecordWithoutSruHeader(otherAnchorDoc, opac.getCoc().getBeautifySetList());
 
                 if (otherAnchorRecord == null) {
@@ -374,11 +390,7 @@ public class SRUHelper {
     public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing,
             String version) throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
-        SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING);
-
-        builder.setFeature("http://xml.org/sax/features/validation", false);
-        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        SAXBuilder builder = getSaxBuilder(false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         // srw:searchRetrieveResponse
         Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
@@ -453,7 +465,7 @@ public class SRUHelper {
 
             if (isMultiVolume) {
                 String anchorResult = SRUHelper.search(catalogue, schema, searchField, anchorIdentifier, packing, version);
-                Document anchorDoc = new SAXBuilder().build(new StringReader(anchorResult), "utf-8");
+                Document anchorDoc = getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
 
                 Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
                 if (anchorRecord != null) {

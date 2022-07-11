@@ -8,7 +8,6 @@ import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
-import org.jdom2.input.SAXBuilder;
 
 import de.intranda.goobi.plugins.sru.SRUHelper;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
@@ -48,7 +47,7 @@ public class HaabProvenienceOpacImport extends GbvMarcSruImport implements IOpac
         SRUHelper.setMarcNamespace(pica);
         String value = SRUHelper.search("http://sru.gbv.de/opac-de-32", sruSchema, "pica.epn", searchValue, packing, version);
         if (StringUtils.isNotBlank(value)) {
-            Document document = new SAXBuilder().build(new StringReader(value), "utf-8");
+            Document document = SRUHelper.getSaxBuilder(true).build(new StringReader(value), "utf-8");
             picaRecord = SRUHelper.getRecordWithoutSruHeader(document, coc.getBeautifySetList());
 
         }
