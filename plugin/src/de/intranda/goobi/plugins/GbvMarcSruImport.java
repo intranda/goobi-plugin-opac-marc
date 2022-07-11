@@ -37,6 +37,7 @@ import de.unigoettingen.sub.search.opac.ConfigOpac;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
 import de.unigoettingen.sub.search.opac.ConfigOpacDoctype;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
@@ -46,6 +47,7 @@ import ugh.exceptions.TypeNotAllowedAsChildException;
 import ugh.exceptions.TypeNotAllowedForParentException;
 
 @PluginImplementation
+@Log4j2
 public class GbvMarcSruImport implements IOpacPlugin {
 
     private int hitcount;
@@ -105,9 +107,9 @@ public class GbvMarcSruImport implements IOpacPlugin {
                     ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
                 }
             } catch (TypeNotAllowedForParentException e) {
-                e.printStackTrace();
+                log.error(e);
             } catch (TypeNotAllowedAsChildException e) {
-                e.printStackTrace();
+                log.error(e);
             }
         }
 
