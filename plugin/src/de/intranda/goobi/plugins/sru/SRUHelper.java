@@ -259,7 +259,7 @@ public class SRUHelper {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                             } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                            } else if (isCartographic && tag.equals("830") && code.equals("w")) {
+                            } else if ((isCartographic || (isFSet && anchorPpn == null)) && tag.equals("830") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                             } else if (tag.equals("954") && code.equals("b")) {
                                 if (otherEpn == null) {
@@ -468,6 +468,9 @@ public class SRUHelper {
                 Document anchorDoc = getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
 
                 Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
+                //                XMLOutputter outputter = new XMLOutputter();
+                //                FileOutputStream output = new FileOutputStream("/tmp/temp_opac.xml");
+                //                outputter.output(anchorRecord, output);
                 if (anchorRecord != null) {
                     List<Element> anchorData = anchorRecord.getChildren();
                     org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
@@ -477,6 +480,7 @@ public class SRUHelper {
 
             }
             collection.appendChild(marcRecord);
+
             return answer.getDocumentElement();
         }
 
