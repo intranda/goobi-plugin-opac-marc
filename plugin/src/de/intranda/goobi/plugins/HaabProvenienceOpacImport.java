@@ -45,7 +45,7 @@ public class HaabProvenienceOpacImport extends GbvMarcSruImport implements IOpac
 
     public Fileformat search(String field, String searchValue, ConfigOpacCatalogue coc, Prefs inPrefs) throws Exception {
         SRUHelper.setMarcNamespace(pica);
-        String value = SRUHelper.search("http://sru.gbv.de/opac-de-32", sruSchema, "pica.epn", searchValue, packing, version);
+        String value = SRUHelper.search("http://sru.k10plus.de/opac-de-32", sruSchema, "pica.epn", searchValue, packing, version);
         if (StringUtils.isNotBlank(value)) {
             Document document = SRUHelper.getSaxBuilder(true).build(new StringReader(value), "utf-8");
             picaRecord = SRUHelper.getRecordWithoutSruHeader(document, coc.getBeautifySetList());
