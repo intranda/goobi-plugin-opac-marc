@@ -30,6 +30,12 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 @PluginImplementation
 public class ZdbMarcSruImport  extends GbvMarcSruImport implements IOpacPlugin {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 5133339779881385185L;
+
+
     public ZdbMarcSruImport() {
         super();
         super.setVersion("1.1");

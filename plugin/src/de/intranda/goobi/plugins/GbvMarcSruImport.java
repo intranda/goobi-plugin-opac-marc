@@ -50,6 +50,10 @@ import ugh.exceptions.TypeNotAllowedForParentException;
 @Log4j2
 public class GbvMarcSruImport implements IOpacPlugin {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 3232502366691871036L;
     private int hitcount;
     protected String gattung = "Aa";
     protected String atstsl;
@@ -89,7 +93,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
         if (node == null) {
             return null;
         }
-        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
+        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs);
         if (ff == null || ff.getDigitalDocument().getLogicalDocStruct() == null || ff.getDigitalDocument().getLogicalDocStruct().getType() == null) {
             return null;
         }

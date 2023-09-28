@@ -7,6 +7,9 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 @PluginImplementation
 public class K10plusOpacPlugin extends GbvMarcSruImport implements IOpacPlugin {
 
+    private static final long serialVersionUID = -4318557950759331407L;
+
+
     public K10plusOpacPlugin() {
         super();
         super.setVersion("1.2");

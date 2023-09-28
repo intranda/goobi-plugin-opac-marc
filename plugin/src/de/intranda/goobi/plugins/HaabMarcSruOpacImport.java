@@ -51,6 +51,7 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
     //  6.) Mehrbändige Werke
 
 
+    private static final long serialVersionUID = -2291609886881235413L;
     @Getter
     private String title = "HaabMarcSru";
 
@@ -87,7 +88,7 @@ public class HaabMarcSruOpacImport extends GbvMarcSruImport implements IOpacPlug
             return null;
         }
 
-        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
+        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs);
         gattung = ff.getDigitalDocument().getLogicalDocStruct().getType().getName();
         ConfigOpacDoctype codt = getOpacDocType();
         if (codt.isPeriodical()) {

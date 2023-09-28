@@ -35,7 +35,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
 import org.goobi.api.sru.SRUClient;
-//import org.goobi.api.sru.SRUClient;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -63,19 +62,22 @@ import ugh.fileformats.mets.XStream;
 
 public class SRUHelper {
     private static final Namespace SRW = Namespace.getNamespace("srw", "http://www.loc.gov/zing/srw/");
-    private static Namespace MARC = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
+    private static Namespace marcNs = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");
 
-    public static void setMarcNamespace(Namespace marc) {
-        MARC = marc;
+    private SRUHelper() {
+
     }
 
+    public static void setMarcNamespace(Namespace marc) {
+        marcNs = marc;
+    }
 
     public static SAXBuilder getSaxBuilder(boolean validation) {
         SAXBuilder builder = null;
         if (validation) {
             builder = new SAXBuilder();
         } else {
-            builder= new SAXBuilder(XMLReaders.NONVALIDATING);
+            builder = new SAXBuilder(XMLReaders.NONVALIDATING);
             builder.setFeature("http://xml.org/sax/features/validation", false);
             builder.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
             builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
@@ -94,6 +96,7 @@ public class SRUHelper {
             client = new SRUClient(catalogue, schema, packing, version);
             return client.getSearchResponse(searchField + "=" + searchValue);
         } catch (MalformedURLException e) {
+            // do nothing
         }
         return "";
     }
@@ -104,8 +107,8 @@ public class SRUHelper {
         SAXBuilder builder = getSaxBuilder(false);
 
         Document doc = builder.build(new StringReader(resultString), "utf-8");
-        Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
-        if (record == null) {
+        Element rec = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
+        if (rec == null) {
             opac.setHitcount(0);
             return null;
         }
@@ -133,7 +136,7 @@ public class SRUHelper {
         answer.appendChild(collection);
 
         boolean shelfmarkFound = false;
-        List<Element> data = record.getChildren();
+        List<Element> data = rec.getChildren();
         for (Element el : data) {
             if (el.getName().equalsIgnoreCase("leader")) {
                 String value = el.getText();
@@ -168,32 +171,22 @@ public class SRUHelper {
                         } else if (isFSet || isPeriodical) {
                             isMultiVolume = true;
                             anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-
                         }
-                    } else if (tag.equals("800") && code.equals("w")) {
-                        isMultiVolume = true;
-                        anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                    } else if (isManuscript && tag.equals("810") && code.equals("w")) {
+                    } else if (tag.equals("800") && code.equals("w") || isManuscript && tag.equals("810") && code.equals("w")) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                     } else if (tag.equals("830") && code.equals("w")) {
                         if (isCartographic || (isFSet && anchorPpn == null)) {
                             isMultiVolume = true;
                             anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-
                         }
                     } else if (tag.equals("776") && code.equals("w")) {
                         if (otherPpn == null) {
                             // found first/only occurrence
                             otherPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-
-                        } else {
-                            otherPpn = null;
-                            foundMultipleEpns = true;
                         }
-
-                    } else if (tag.equals("954")) {
-                        if (code.equals("b")) {
+                    } else if (tag.equals("924")) {
+                        if (code.equals("a")) {
                             if (searchField.equals("pica.epn")) {
                                 // remove wrong epns
                                 currentEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
@@ -201,7 +194,7 @@ public class SRUHelper {
                                 if (!searchValue.trim().equals(currentEpn)) {
                                     sub.setAttribute("code", "invalid");
                                     for (Element exemplarData : subfields) {
-                                        if (exemplarData.getAttributeValue("code").equals("d")) {
+                                        if (exemplarData.getAttributeValue("code").equals("g")) {
                                             exemplarData.setAttribute("code", "invalid");
                                         }
                                     }
@@ -215,7 +208,7 @@ public class SRUHelper {
                                     foundMultipleEpns = true;
                                 }
                             }
-                        } else if (code.equals("d")) {
+                        } else if (code.equals("g")) {
                             if (!shelfmarkFound && isCurrentEpn) {
                                 shelfmarkFound = true;
                             } else {
@@ -231,21 +224,21 @@ public class SRUHelper {
         // get digital epn from digital ppn record
         if (otherPpn != null) {
             String otherResult = SRUHelper.search(catalogue, schema, isPeriodical ? "pica.zdb" : "pica.ppn", otherPpn, packing, version);
-            Document otherDocument =  getSaxBuilder(true).build(new StringReader(otherResult), "utf-8");
+            Document otherDocument = getSaxBuilder(true).build(new StringReader(otherResult), "utf-8");
             if (otherDocument != null) {
                 Element otherRecord = getRecordWithoutSruHeader(otherDocument, opac.getCoc().getBeautifySetList());
                 if (otherRecord == null) {
                     Helper.setFehlerMeldung("import_OtherEPNNotFound");
                 } else {
 
-                    List<Element> controlList = otherRecord.getChildren("controlfield", MARC);
+                    List<Element> controlList = otherRecord.getChildren("controlfield", marcNs);
                     for (Element field : controlList) {
                         if (field.getAttributeValue("tag").equals("001")) {
                             otherPpn = field.getText();
                         }
                     }
 
-                    List<Element> fieldList = otherRecord.getChildren("datafield", MARC);
+                    List<Element> fieldList = otherRecord.getChildren("datafield", marcNs);
                     for (Element field : fieldList) {
                         String tag = field.getAttributeValue("tag");
 
@@ -259,9 +252,9 @@ public class SRUHelper {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                             } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "");
-                            } else if ((isCartographic || (isFSet && anchorPpn == null)) && tag.equals("830") && code.equals("w")) {
+                            } else if (tag.equals("830") && code.equals("w") && (isCartographic || (isFSet && otherAnchorPpn == null)) ) {
                                 otherAnchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            } else if (tag.equals("954") && code.equals("b")) {
+                            } else if (tag.equals("924") && code.equals("a")) {
                                 if (otherEpn == null) {
                                     otherEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                                 } else {
@@ -274,24 +267,24 @@ public class SRUHelper {
                     }
                 }
                 if (otherPpn != null) {
-                    Element datafield = new Element("datafield", MARC);
+                    Element datafield = new Element("datafield", marcNs);
                     datafield.setAttribute("tag", "ppnDigital");
                     datafield.setAttribute("ind1", "");
                     datafield.setAttribute("ind2", "");
 
-                    Element subfield = new Element("subfield", MARC);
+                    Element subfield = new Element("subfield", marcNs);
                     subfield.setAttribute("code", "a");
                     subfield.setText(otherPpn);
                     datafield.addContent(subfield);
                     data.add(datafield);
                 }
                 if (otherEpn != null && !foundMultipleEpns) {
-                    Element datafield = new Element("datafield", MARC);
+                    Element datafield = new Element("datafield", marcNs);
                     datafield.setAttribute("tag", "epnDigital");
                     datafield.setAttribute("ind1", "");
                     datafield.setAttribute("ind2", "");
 
-                    Element subfield = new Element("subfield", MARC);
+                    Element subfield = new Element("subfield", marcNs);
                     subfield.setAttribute("code", "a");
                     subfield.setText(otherEpn);
                     datafield.addContent(subfield);
@@ -304,7 +297,7 @@ public class SRUHelper {
         if (isMultiVolume) {
             // get anchor record
             String anchorResult = SRUHelper.search(catalogue, schema, "pica.ppn", anchorPpn, packing, version);
-            Document anchorDoc =  getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
+            Document anchorDoc = getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
 
             Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
 
@@ -321,23 +314,22 @@ public class SRUHelper {
                     Helper.setFehlerMeldung("import_OtherEPNNotFound");
                 } else {
 
-                    List<Element> controlList = otherAnchorRecord.getChildren("controlfield", MARC);
+                    List<Element> controlList = otherAnchorRecord.getChildren("controlfield", marcNs);
                     for (Element field : controlList) {
                         if (field.getAttributeValue("tag").equals("001")) {
                             otherAnchorPpn = field.getText();
                         }
                     }
 
-                    List<Element> fieldList = otherAnchorRecord.getChildren("datafield", MARC);
+                    List<Element> fieldList = otherAnchorRecord.getChildren("datafield", marcNs);
                     for (Element field : fieldList) {
-                        if (field.getAttributeValue("tag").equals("954")) {
+                        if (field.getAttributeValue("tag").equals("924")) {
                             List<Element> subfields = field.getChildren();
                             for (Element sub : subfields) {
                                 String code = sub.getAttributeValue("code");
-                                if (code.equals("b")) {
+                                if (code.equals("a")) {
                                     if (otherAnchorEpn == null) {
                                         otherAnchorEpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                                        ;
                                     } else {
                                         foundMultipleEpns = true;
                                     }
@@ -347,12 +339,12 @@ public class SRUHelper {
                     }
 
                     if (otherAnchorPpn != null) {
-                        Element datafield = new Element("datafield", MARC);
+                        Element datafield = new Element("datafield", marcNs);
                         datafield.setAttribute("tag", "ppnDigital");
                         datafield.setAttribute("ind1", "");
                         datafield.setAttribute("ind2", "");
 
-                        Element subfield = new Element("subfield", MARC);
+                        Element subfield = new Element("subfield", marcNs);
                         subfield.setAttribute("code", "a");
                         subfield.setText(otherAnchorPpn);
                         datafield.addContent(subfield);
@@ -360,12 +352,12 @@ public class SRUHelper {
                     }
 
                     if (otherAnchorEpn != null && !foundMultipleEpns) {
-                        Element datafield = new Element("datafield", MARC);
+                        Element datafield = new Element("datafield", marcNs);
                         datafield.setAttribute("tag", "epnDigital");
                         datafield.setAttribute("ind1", "");
                         datafield.setAttribute("ind2", "");
 
-                        Element subfield = new Element("subfield", MARC);
+                        Element subfield = new Element("subfield", marcNs);
                         subfield.setAttribute("code", "a");
                         subfield.setText(otherAnchorEpn);
                         datafield.addContent(subfield);
@@ -393,8 +385,8 @@ public class SRUHelper {
         SAXBuilder builder = getSaxBuilder(false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         // srw:searchRetrieveResponse
-        Element record = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
-        if (record == null) {
+        Element rec = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
+        if (rec == null) {
             opac.setHitcount(0);
             return null;
         } else {
@@ -412,7 +404,7 @@ public class SRUHelper {
             boolean isCartographic = false;
 
             String anchorIdentifier = "";
-            List<Element> data = record.getChildren();
+            List<Element> data = rec.getChildren();
 
             for (Element el : data) {
                 if (el.getName().equalsIgnoreCase("leader")) {
@@ -452,10 +444,9 @@ public class SRUHelper {
                         } else if (isManuscript && tag.equals("810") && code.equals("w")) {
                             isMultiVolume = true;
                             anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        } else if (tag.equals("830") && code.equals("w")) {
-                            if (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier))) {
-                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                            }
+                        } else if (tag.equals("830") && code.equals("w")
+                                && (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier)))) {
+                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                         }
                     }
                 }
@@ -468,9 +459,7 @@ public class SRUHelper {
                 Document anchorDoc = getSaxBuilder(true).build(new StringReader(anchorResult), "utf-8");
 
                 Element anchorRecord = getRecordWithoutSruHeader(anchorDoc, opac.getCoc().getBeautifySetList());
-                //                XMLOutputter outputter = new XMLOutputter();
-                //                FileOutputStream output = new FileOutputStream("/tmp/temp_opac.xml");
-                //                outputter.output(anchorRecord, output);
+
                 if (anchorRecord != null) {
                     List<Element> anchorData = anchorRecord.getChildren();
                     org.w3c.dom.Element anchorMarcRecord = getRecord(answer, anchorData, opac);
@@ -489,25 +478,24 @@ public class SRUHelper {
     public static Element getRecordWithoutSruHeader(Document document, List<ConfigOpacCatalogueBeautifier> beautifySetList) {
         Element root = document.getRootElement();
         // <srw:records>
-        Element srw_records = root.getChild("records", SRW);
+        Element srwRecords = root.getChild("records", SRW);
         // <srw:record>
-        if (srw_records == null) {
+        if (srwRecords == null) {
             return null;
         }
-        List<Element> srw_recordList = srw_records.getChildren("record", SRW);
+        List<Element> srwRecordList = srwRecords.getChildren("record", SRW);
 
         // <srw:recordData>
-        if (srw_recordList == null || srw_recordList.isEmpty()) {
+        if (srwRecordList == null || srwRecordList.isEmpty()) {
             return null;
         }
-        Element recordData = srw_recordList.get(0).getChild("recordData", SRW);
+        Element recordData = srwRecordList.get(0).getChild("recordData", SRW);
 
-        Element record = recordData.getChild("record", MARC);
+        Element rec = recordData.getChild("record", marcNs);
 
-        executeBeautifier(beautifySetList, record);
-        return record;
+        executeBeautifier(beautifySetList, rec);
+        return rec;
     }
-
 
     /*
      * usage:
@@ -531,8 +519,7 @@ public class SRUHelper {
 
      */
 
-    private static void executeBeautifier(List<ConfigOpacCatalogueBeautifier> beautifySetList, Element record) {
-
+    private static void executeBeautifier(List<ConfigOpacCatalogueBeautifier> beautifySetList, Element rec) {
 
         // run through all configured beautifier
         if (beautifySetList != null && !beautifySetList.isEmpty()) {
@@ -543,7 +530,7 @@ public class SRUHelper {
                 // first, check if the current rule has conditions, check if conditions apply
                 if (!conditionList.isEmpty()) {
                     for (ConfigOpacCatalogueBeautifierElement condition : beautifier.getTagElementsToProof()) {
-                        for (Element field : record.getChildren()) {
+                        for (Element field : rec.getChildren()) {
                             // check if condition was configured for a leader position (tag starts with leader)
                             /*
                              * <condition tag="leader6" subtag="" value="e" />
@@ -578,19 +565,15 @@ public class SRUHelper {
                                 /*
                                  * <condition tag="041" subtag="a" value="lat" />
                                  */
-                            } else if (field.getName().equalsIgnoreCase("datafield")) {
-                                if (condition.getTag().equals(field.getAttributeValue("tag"))) {
-                                    // found main field, check subfields
-                                    List<Element> subelements = field.getChildren();
-                                    for (Element subfield : subelements) {
-                                        String subtag = subfield.getAttributeValue("code");
-                                        if (condition.getSubtag().equals(subtag)) {
-                                            // found subfield, now check if content matched
-                                            if (condition.getValue().equals("*") || subfield.getText().matches(condition.getValue())) {
-                                                conditionList.remove(condition);
-                                                newValue = subfield.getText();
-                                            }
-                                        }
+                            } else if (field.getName().equalsIgnoreCase("datafield") && condition.getTag().equals(field.getAttributeValue("tag"))) {
+                                // found main field, check subfields
+                                List<Element> subelements = field.getChildren();
+                                for (Element subfield : subelements) {
+                                    String subtag = subfield.getAttributeValue("code");
+                                    if (condition.getSubtag().equals(subtag)
+                                            && (condition.getValue().equals("*") || subfield.getText().matches(condition.getValue()))) {
+                                        conditionList.remove(condition);
+                                        newValue = subfield.getText();
                                     }
                                 }
                             }
@@ -601,7 +584,7 @@ public class SRUHelper {
                 Element subField = null;
                 // if conditions are fulfilled, search for field to change
                 if (conditionList.isEmpty()) {
-                    for (Element field : record.getChildren()) {
+                    for (Element field : rec.getChildren()) {
                         if (field.getName().equalsIgnoreCase("leader")) {
                             if (beautifier.getTagElementToChange().getTag().startsWith("leader")) {
                                 int pos = Integer.parseInt(beautifier.getTagElementToChange().getTag().replace("leader", ""));
@@ -619,17 +602,16 @@ public class SRUHelper {
 
                             }
 
-                        } else if (field.getName().equalsIgnoreCase("datafield")) {
-                            if (beautifier.getTagElementToChange().getTag().equals(field.getAttributeValue("tag"))) {
-                                // found main field, check subfields
-                                mainField = field;
-                                List<Element> subelements = field.getChildren();
-                                for (Element subfield : subelements) {
-                                    String subtag = subfield.getAttributeValue("code");
-                                    if (beautifier.getTagElementToChange().getSubtag().equals(subtag)) {
-                                        // found subfield to change
-                                        subField = subfield;
-                                    }
+                        } else if (field.getName().equalsIgnoreCase("datafield")
+                                && (beautifier.getTagElementToChange().getTag().equals(field.getAttributeValue("tag")))) {
+                            // found main field, check subfields
+                            mainField = field;
+                            List<Element> subelements = field.getChildren();
+                            for (Element subfield : subelements) {
+                                String subtag = subfield.getAttributeValue("code");
+                                if (beautifier.getTagElementToChange().getSubtag().equals(subtag)) {
+                                    // found subfield to change
+                                    subField = subfield;
                                 }
                             }
                         }
@@ -640,28 +622,27 @@ public class SRUHelper {
                     mainField.setText(newValue);
                 } else if (newValue != null) {
                     // if '*' was used, replace current value with value from condition, otherwise use value from configuration
-                    //
                     if (!"*".equals(beautifier.getTagElementToChange().getValue())) {
                         newValue = beautifier.getTagElementToChange().getValue().replace("\\u0020", " ");
 
                         if (StringUtils.isNotBlank(beautifier.getTagElementToChange().getTag())
                                 && StringUtils.isBlank(beautifier.getTagElementToChange().getSubtag())) {
                             if (mainField == null) {
-                                mainField = new Element("controlfield", MARC);
+                                mainField = new Element("controlfield", marcNs);
                                 mainField.setAttribute("tag", beautifier.getTagElementToChange().getTag());
-                                record.addContent(mainField);
+                                rec.addContent(mainField);
                             }
                             mainField.setText(newValue);
                         } else {
                             if (mainField == null) {
-                                mainField = new Element("datafield", MARC);
+                                mainField = new Element("datafield", marcNs);
                                 mainField.setAttribute("tag", beautifier.getTagElementToChange().getTag());
                                 mainField.setAttribute("ind1", " ");
                                 mainField.setAttribute("ind2", " ");
-                                record.addContent(mainField);
+                                rec.addContent(mainField);
                             }
                             if (subField == null) {
-                                subField = new Element("subfield", MARC);
+                                subField = new Element("subfield", marcNs);
                                 subField.setAttribute("code", beautifier.getTagElementToChange().getSubtag());
                                 mainField.addContent(subField);
                             }
@@ -674,8 +655,7 @@ public class SRUHelper {
         }
     }
 
-    public static Fileformat parseMarcFormat(Node marc, Prefs prefs, String epn)
-            throws ReadException, PreferencesException, TypeNotAllowedForParentException {
+    public static Fileformat parseMarcFormat(Node marc, Prefs prefs) throws ReadException, PreferencesException, TypeNotAllowedForParentException {
 
         MarcFileformat pp = new MarcFileformat(prefs);
         pp.read(marc);
@@ -776,7 +756,7 @@ public class SRUHelper {
                         sorting.setAttribute("code", "x");
                         String subtext = sub.getText();
                         if (!ind2.trim().isEmpty()) {
-                            int numberOfNonfillingCharacter = new Integer(ind2).intValue();
+                            int numberOfNonfillingCharacter = Integer.parseInt(ind2);
                             subtext = subtext.substring(numberOfNonfillingCharacter);
                         }
                         title = subtext;
