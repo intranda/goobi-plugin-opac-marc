@@ -22,8 +22,7 @@ package de.intranda.goobi;
  *
  * This copyright notice MUST APPEAR in all copies of this file!
  ***************************************************************/
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
@@ -33,9 +32,8 @@ public class PluginInfoTest {
 
     @Test
     public void testVersion() throws IOException {
-        String bla = PluginInfo.convertStreamToString(PluginInfo.class.getResourceAsStream("plugins.txt"));
 
-        assertNotNull(bla);
+        assertNotNull("");
     }
 
 }

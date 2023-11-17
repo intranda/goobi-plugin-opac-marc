@@ -19,6 +19,8 @@ import ugh.dl.Prefs;
 @PluginImplementation
 public class HaabProvenienceOpacImport extends GbvMarcSruImport implements IOpacPlugin {
 
+    private static final long serialVersionUID = 1634138719131116342L;
+
     private static Namespace pica = Namespace.getNamespace("pica", "info:srw/schema/5/picaXML-v1.0");
 
     private Element picaRecord;
@@ -57,11 +59,4 @@ public class HaabProvenienceOpacImport extends GbvMarcSruImport implements IOpac
     public Element getPicaRecord() {
         return picaRecord;
     }
-
-    public static void main(String[] args) throws Exception {
-        HaabProvenienceOpacImport imp = new HaabProvenienceOpacImport();
-        imp.search(null, "1598929097", null, null);
-        Element element = imp.getPicaRecord();
-    }
-
 }

@@ -61,7 +61,7 @@ public class NLIMarcOpacPlugin extends GbvMarcSruImport implements IOpacPlugin {
         if (node == null) {
             return null;
         }
-        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs, searchValue);
+        Fileformat ff = SRUHelper.parseMarcFormat(node, inPrefs);
         if (ff == null || ff.getDigitalDocument().getLogicalDocStruct() == null || ff.getDigitalDocument().getLogicalDocStruct().getType() == null) {
             return null;
         }
