@@ -491,6 +491,13 @@ public class SRUHelper {
 
         Element rec = recordData.getChild("record", marcNs);
 
+        if (rec == null) {
+            Element collection = recordData.getChild("collection", marcNs);
+            if (collection != null) {
+                rec = collection.getChild("record", marcNs);
+            }
+        }
+
         executeBeautifier(beautifySetList, rec);
         return rec;
     }

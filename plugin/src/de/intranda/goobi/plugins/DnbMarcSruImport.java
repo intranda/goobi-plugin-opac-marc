@@ -28,29 +28,33 @@ import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 @PluginImplementation
-public class ZdbMarcSruImport extends GbvMarcSruImport implements IOpacPlugin {
+public class DnbMarcSruImport  extends GbvMarcSruImport implements IOpacPlugin {
 
     /**
      * 
      */
     private static final long serialVersionUID = 5133339779881385185L;
 
-    public ZdbMarcSruImport() {
+
+    public DnbMarcSruImport() {
         super();
         super.setVersion("1.1");
         super.setIdentifierSearchFieldPrefix("idn");
-        super.setSruSchema("MARC21plus-xml");
+        super.setSruSchema("MARC21-xml");
 
     }
 
     @Override
     public String getTitle() {
-        return "DNB-MARC";
+        return "ZDB-MARC";
     }
+
 
     @Override
     public String getDescription() {
-        return "DNB-MARC";
+        return "ZDB-MARC";
     }
+
+
 
 }
