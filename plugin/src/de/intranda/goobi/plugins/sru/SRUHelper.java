@@ -419,6 +419,8 @@ public class SRUHelper {
                         isManuscript = true;
                     } else if (c6 == 'e') {
                         isCartographic = true;
+                    } else if (c6 == 'a' && (c7 == 'a' || c7 == 'b')) {
+                        isMultiVolume = true;
                     }
                     if (c19 == 'b' || c19 == 'c') {
                         isMultiVolume = true;

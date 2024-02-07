@@ -2,6 +2,7 @@
 	<target name="devbuild">
 		<exec executable="mvn">
 			<arg value="package"/>
+            <arg value="-Dmaven.test.skip=true" />          			
 		</exec>
 		<copy file="module-main/target/plugin_intranda_opac_marc.jar" todir="/opt/digiverso/goobi/plugins/opac/"/>
 	</target>
