@@ -45,12 +45,12 @@ public class ZdbMarcSruImport extends GbvMarcSruImport implements IOpacPlugin {
 
     @Override
     public String getTitle() {
-        return "DNB-MARC";
+        return "ZDB-MARC";
     }
 
     @Override
     public String getDescription() {
-        return "DNB-MARC";
+        return getTitle();
     }
 
 }

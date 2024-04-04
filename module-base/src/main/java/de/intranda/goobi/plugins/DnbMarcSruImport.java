@@ -28,13 +28,12 @@ import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 @PluginImplementation
-public class DnbMarcSruImport  extends GbvMarcSruImport implements IOpacPlugin {
+public class DnbMarcSruImport extends GbvMarcSruImport implements IOpacPlugin {
 
     /**
      * 
      */
     private static final long serialVersionUID = 5133339779881385185L;
-
 
     public DnbMarcSruImport() {
         super();
@@ -46,15 +45,12 @@ public class DnbMarcSruImport  extends GbvMarcSruImport implements IOpacPlugin {
 
     @Override
     public String getTitle() {
-        return "ZDB-MARC";
+        return "DNB-MARC";
     }
-
 
     @Override
     public String getDescription() {
-        return "ZDB-MARC";
+        return getTitle();
     }
-
-
 
 }
