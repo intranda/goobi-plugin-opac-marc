@@ -72,23 +72,21 @@ public class GbvMarcSruImport implements IOpacPlugin {
         String searchField = "";
         String catalogue = cat.getAddress();
 
-        if (inSuchfeld.equals("12")) {
+        if ("12".equals(inSuchfeld)) {
             searchField = identifierSearchFieldPrefix;
-        } else if (inSuchfeld.equals("8000")) {
+        } else if ("8000".equals(inSuchfeld)) {
             searchField = "pica.epn";
-        } else if (inSuchfeld.equals("7")) {
+        } else if ("7".equals(inSuchfeld)) {
             searchField = "pica.isb";
-        } else if (inSuchfeld.equals("8")) {
+        } else if ("8".equals(inSuchfeld)) {
             searchField = "pica.iss";
         } else {
             searchField = inSuchfeld;
         }
 
-
-
         SRUHelper.setMarcNamespace(marcNamespace);
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
-        value= Normalizer.normalize(value, Normalizer.Form.NFC);
+        value = Normalizer.normalize(value, Normalizer.Form.NFC);
         Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version);
         if (node == null) {
             return null;
@@ -110,9 +108,7 @@ public class GbvMarcSruImport implements IOpacPlugin {
                     DocStruct dsvolume = ff.getDigitalDocument().createDocStruct(dstV);
                     ff.getDigitalDocument().getLogicalDocStruct().addChild(dsvolume);
                 }
-            } catch (TypeNotAllowedForParentException e) {
-                log.error(e);
-            } catch (TypeNotAllowedAsChildException e) {
+            } catch (TypeNotAllowedForParentException | TypeNotAllowedAsChildException e) {
                 log.error(e);
             }
         }
