@@ -94,7 +94,7 @@ public class SRUHelper {
         SRUClient client;
         try {
             client = new SRUClient(catalogue, schema, packing, version);
-            return client.getSearchResponse(searchField + "=" + searchValue);
+            return client.getSearchResponse(searchField + "=" + searchValue.trim());
         } catch (MalformedURLException e) {
             // do nothing
         }
