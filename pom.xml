@@ -3,11 +3,12 @@
   <parent>
     <groupId>io.goobi.workflow</groupId>
     <artifactId>workflow-base</artifactId>
-    <version>25.03-SNAPSHOT</version>
+    <version>25.02</version>
     <relativePath />
   </parent>
   <groupId>io.goobi.workflow.plugin</groupId>
   <artifactId>plugin-opac-marc</artifactId>
+  <version>25.02.1</version>
   <packaging>pom</packaging>
   <modules>
     <module>module-base</module>
@@ -22,7 +23,7 @@
     <dependency>
       <groupId>io.goobi.workflow</groupId>
       <artifactId>workflow-core</artifactId>
-      <version>${project.version}</version>
+      <version>25.02</version>
       <classifier>classes</classifier>
     </dependency>
   </dependencies>
