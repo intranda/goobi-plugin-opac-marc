@@ -95,10 +95,12 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
         SRUHelper.setMarcNamespace(marcNamespace);
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
+
         value = Normalizer.normalize(value, Normalizer.Form.NFC);
         Path marcFilename = null;
         if (saveMarcRecord) {
             marcFilename = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), searchValue.replaceAll("\\W", "") + "_marc.xml");
+            pathToMarcRecord.add(marcFilename);
         }
 
         Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version, saveMarcRecord, marcFilename);
