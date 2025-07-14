@@ -23,7 +23,11 @@
 
 package de.intranda.goobi.plugins;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import org.goobi.production.enums.PluginType;
@@ -32,6 +36,7 @@ import org.jdom2.Namespace;
 import org.w3c.dom.Node;
 
 import de.intranda.goobi.plugins.sru.SRUHelper;
+import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.UghHelper;
 import de.unigoettingen.sub.search.opac.ConfigOpac;
 import de.unigoettingen.sub.search.opac.ConfigOpacCatalogue;
@@ -66,8 +71,12 @@ public class GbvMarcSruImport implements IOpacPlugin {
     private String identifierSearchFieldPrefix = "pica.ppn";
     private Namespace marcNamespace = Namespace.getNamespace("marc", "http://www.loc.gov/MARC21/slim");;
 
+    protected boolean saveMarcRecord = false;
+    protected List<Path> pathToMarcRecord = new ArrayList<>();
+
     @Override
     public Fileformat search(String inSuchfeld, String searchValue, ConfigOpacCatalogue cat, Prefs inPrefs) throws Exception {
+        pathToMarcRecord.clear();
         coc = cat;
         String searchField = "";
         String catalogue = cat.getAddress();
@@ -86,8 +95,15 @@ public class GbvMarcSruImport implements IOpacPlugin {
 
         SRUHelper.setMarcNamespace(marcNamespace);
         String value = SRUHelper.search(catalogue, sruSchema, searchField, searchValue, packing, version);
+
         value = Normalizer.normalize(value, Normalizer.Form.NFC);
-        Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version);
+        Path marcFilename = null;
+        if (saveMarcRecord) {
+            marcFilename = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), searchValue.replaceAll("\\W", "") + "_marc.xml");
+            pathToMarcRecord.add(marcFilename);
+        }
+
+        Node node = SRUHelper.parseGbvResult(this, catalogue, sruSchema, searchField, value, packing, version, saveMarcRecord, marcFilename);
         if (node == null) {
             return null;
         }

@@ -1,5 +1,7 @@
 package de.intranda.goobi.plugins.sru;
 
+import java.io.FileWriter;
+
 /***************************************************************
  * Copyright notice
  *
@@ -26,6 +28,7 @@ package de.intranda.goobi.plugins.sru;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +45,8 @@ import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaders;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
@@ -378,12 +383,19 @@ public class SRUHelper {
     }
 
     public static Node parseGbvResult(GbvMarcSruImport opac, String catalogue, String schema, String searchField, String resultString, String packing,
-            String version) throws IOException, JDOMException, ParserConfigurationException {
+            String version, boolean saveMarcFile, Path destination) throws IOException, JDOMException, ParserConfigurationException {
         // removed validation against external dtd
         SAXBuilder builder = getSaxBuilder(false);
         Document doc = builder.build(new StringReader(resultString), "utf-8");
         // srw:searchRetrieveResponse
         Element rec = getRecordWithoutSruHeader(doc, opac.getCoc().getBeautifySetList());
+
+        if (saveMarcFile) {
+            XMLOutputter xmlOutput = new XMLOutputter();
+            xmlOutput.setFormat(Format.getPrettyFormat());
+            xmlOutput.output(rec, new FileWriter(destination.toString()));
+        }
+
         if (rec == null) {
             opac.setHitcount(0);
             return null;
