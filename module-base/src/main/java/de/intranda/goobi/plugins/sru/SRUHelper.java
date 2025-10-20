@@ -184,7 +184,8 @@ public class SRUHelper {
                             isMultiVolume = true;
                             anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                         }
-                    } else if ("800".equals(tag) && "w".equals(code) || isManuscript && "810".equals(tag) && "w".equals(code)) {
+                    } else if ("800".equals(tag) && "w".equals(code) || isManuscript && "810".equals(tag) && "w".equals(code)
+                            || isFSet && "811".equals(tag) && "w".equals(code)) {
                         isMultiVolume = true;
                         anchorPpn = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                     } else if ("830".equals(tag) && "w".equals(code)) {
@@ -466,7 +467,11 @@ public class SRUHelper {
                         } else if ("830".equals(tag) && "w".equals(code)
                                 && (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier)))) {
                             anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                        } else if (isMultiVolume && "811".equals(tag) && "w".equals(code)
+                                && StringUtils.isBlank(anchorIdentifier)) {
+                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                         }
+
                     }
                 }
             }
