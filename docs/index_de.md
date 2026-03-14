@@ -31,7 +31,7 @@ Wenn in Goobi nach einem Identifier gesucht wird, wird im Hintergrund eine Anfra
 
 ![Oberfläche von Goobi workflow zur Abfrage des Katalogs](screen1_de.png)
 
-Nach der Abfrage des eigentlichen Datensatzes aus dem Katalog erfolgt das Mapping der Metadaten gemäß der im Regelsatz konfigurieren Regeln.
+Nach der Abfrage des eigentlichen Datensatzes aus dem Katalog erfolgt das Mapping der Metadaten gemäß der im Regelsatz konfigurierten Regeln.
 
 
 ## Konfiguration
