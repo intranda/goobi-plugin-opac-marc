@@ -55,4 +55,4 @@ Das Attribut `title` enthält den Namen, unter dem der Katalog in der Nutzerober
 
 Das Mapping der Inhalte eines MARC-Datensatzes erfolgt innerhalb des jeweilig verwendeten Regelsatzes von Goobi workflow. Genauere Informationen, wie dieses Mapping konfiguriert werden kann finden sich innerhalb der UGH-Dokumentation hier:
 
-[https://docs.goobi.io/ugh-de/4/4.1/4.1.3](https://docs.goobi.io/ugh-de/4/4.1/4.1.3)
+https://docs.goobi.io/de/other/ugh/serialisation/marc/introduction

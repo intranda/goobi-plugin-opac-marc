@@ -55,4 +55,4 @@ The `title` attribute contains the name under which the catalog can be selected 
 
 The content of a MARC data record is mapped within the Goobi workflow ruleset used in each case. For more information on how to configure this mapping, see the UGH documentation here:
 
-[https://docs.goobi.io/ugh-en/4/4.1/4.1.3](https://docs.goobi.io/ugh-en/4/4.1/4.1.3)
+https://docs.goobi.io/en/other/ugh/serialisation/marc/introduction
