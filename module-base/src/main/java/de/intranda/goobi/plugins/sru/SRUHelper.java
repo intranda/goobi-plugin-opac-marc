@@ -141,7 +141,7 @@ public class SRUHelper {
         boolean foundMultipleEpns = false;
 
         // generate an answer document
-        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbfac = createSecureDocumentBuilderFactory();
         DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
         org.w3c.dom.Document answer = docBuilder.newDocument();
         org.w3c.dom.Element collection = answer.createElement("collection");
@@ -410,7 +410,7 @@ public class SRUHelper {
         } else {
             opac.setHitcount(1);
             // generate an answer document
-            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory dbfac = createSecureDocumentBuilderFactory();
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
             org.w3c.dom.Document answer = docBuilder.newDocument();
             org.w3c.dom.Element collection = answer.createElement("collection");
@@ -817,7 +817,7 @@ public class SRUHelper {
         } else {
             opac.setHitcount(1);
             // generate an answer document
-            DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory dbfac = createSecureDocumentBuilderFactory();
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
             org.w3c.dom.Document answer = docBuilder.newDocument();
             org.w3c.dom.Element collection = answer.createElement("collection");
@@ -831,5 +831,20 @@ public class SRUHelper {
 
             return answer.getDocumentElement();
         }
+    }
+
+    private static DocumentBuilderFactory createSecureDocumentBuilderFactory() {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        } catch (ParserConfigurationException e) {
+            //
+        }
+        dbf.setXIncludeAware(false);
+        dbf.setExpandEntityReferences(false);
+        return dbf;
     }
 }
