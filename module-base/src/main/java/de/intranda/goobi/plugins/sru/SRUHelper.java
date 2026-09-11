@@ -36,7 +36,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.goobi.api.sru.SRUClient;
 import org.goobi.production.plugin.interfaces.IOpacPlugin;
 import org.jdom2.Document;
@@ -447,31 +447,33 @@ public class SRUHelper {
                     }
                 }
 
-                if ("datafield".equalsIgnoreCase(el.getName())) {
-                    String tag = el.getAttributeValue("tag");
-                    List<Element> subfields = el.getChildren();
-                    for (Element sub : subfields) {
-                        String code = sub.getAttributeValue("code");
-                        // anchor identifier
-                        if ("773".equals(tag) && "w".equals(code)) {
-                            if (!isMultiVolume && !isPeriodical) {
-                                sub.setText("");
-                            } else {
+                if (StringUtils.isBlank(anchorIdentifier)) {
+                    if ("datafield".equalsIgnoreCase(el.getName())) {
+                        String tag = el.getAttributeValue("tag");
+                        List<Element> subfields = el.getChildren();
+                        for (Element sub : subfields) {
+                            String code = sub.getAttributeValue("code");
+                            // anchor identifier
+                            if ("773".equals(tag) && "w".equals(code)) {
+                                if (!isMultiVolume && !isPeriodical) {
+                                    sub.setText("");
+                                } else {
+                                    anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                                }
+                            } else if ("800".equals(tag) && "w".equals(code) && isMultiVolume) {
+                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            } else if (isManuscript && "810".equals(tag) && "w".equals(code)) {
+                                isMultiVolume = true;
+                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            } else if ("830".equals(tag) && "w".equals(code)
+                                    && (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier)))) {
+                                anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
+                            } else if (isMultiVolume && "811".equals(tag) && "w".equals(code)
+                                    && StringUtils.isBlank(anchorIdentifier)) {
                                 anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
                             }
-                        } else if ("800".equals(tag) && "w".equals(code) && isMultiVolume) {
-                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        } else if (isManuscript && "810".equals(tag) && "w".equals(code)) {
-                            isMultiVolume = true;
-                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        } else if ("830".equals(tag) && "w".equals(code)
-                                && (isCartographic || (isMultiVolume && StringUtils.isBlank(anchorIdentifier)))) {
-                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        } else if (isMultiVolume && "811".equals(tag) && "w".equals(code)
-                                && StringUtils.isBlank(anchorIdentifier)) {
-                            anchorIdentifier = sub.getText().replaceAll("\\(.+\\)", "").replace("KXP", "");
-                        }
 
+                        }
                     }
                 }
             }
